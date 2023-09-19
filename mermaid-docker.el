@@ -28,6 +28,30 @@
 
 ;;; Code:
 
+(defun mermaid-docker-compile-file (filename)
+  "Generic advice func which replaces 'mermaid-compile-file'"
+  (message "Replaced"))
+
+(defun mermaid-docker-mode-activate ()
+  "Activate TypewriterRoll locally to a buffer"
+  (inline)
+  (advice-add
+   'mermaid-compile-file
+   :override #'mermaid-docker-compile-file))
+
+(defun mermaid-docker-mode-deactivate ()
+  "Dectivate TypewriterRoll locally to a buffer"
+  (inline)
+  (advice-remove
+   'mermaid-compile-file
+   #'mermaid-docker-compile-file))
+
+(define-minor-mode mermaid-docker-mode
+  "Minor mode to patch mermaid-mode with Docker-enabled version"
+  :lighter " mermaid-docker"
+  (if mermaid-docker-mode
+      (mermaid-docker-mode-activate)
+    (mermaid-docker-mode-deactivate)))
 
 (provide 'mermaid-docker)
 ;;; mermaid-docker.el ends here
