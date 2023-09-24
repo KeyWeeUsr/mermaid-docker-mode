@@ -12,8 +12,8 @@ the filesystem.
 ## How to
 
 1. Have [`mermaid-mode`](https://melpa.org/#/mermaid-mode) installed.
-2. Activate this mode with `M-x mermaid-docker-mode`
-3. Run the install function `M-x mermaid-docker-install`
+2. Run the install function `M-x mermaid-docker-install`
+3. Activate this mode with `M-x mermaid-docker-mode`
 4. After successful installation `C-c C-c` for `mermaid-mode` is patched and
    renders the graphs via Docker container
 
