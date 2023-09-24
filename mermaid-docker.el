@@ -156,16 +156,10 @@
     ;; clean first
     (kill-buffer (get-buffer-create buff-name))
 
-    (when (not (eq 0 (call-process
-                      "docker" nil
-                      (get-buffer-create buff-name)
-                      nil
-                      "build" "--tag" (concat mermaid-docker-image-name "-tmp")
-                      name)))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
-        (setq failed t)))
-    (if (eq failed t)
+    (if (md-call-cmd
+           (get-buffer-create buff-name)
+           '("docker" "build" "--tag"
+             (concat mermaid-docker-image-name "-tmp") name))
         (progn
           (switch-to-buffer (get-buffer-create buff-name))
           (user-error "Failed to build image"))
