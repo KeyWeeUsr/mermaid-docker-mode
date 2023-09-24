@@ -60,6 +60,10 @@
   "/usr/bin/xviewer"
   "Path to external image viewer")
 
+(defconst mermaid-docker-focus-steal-fix
+  t
+  "Should attempt to fix focus stealing?")
+
 (defconst mermaid-docker-external
   nil
   "Use external viewer to display rendered mermaid graph")
@@ -97,6 +101,13 @@
       (save-excursion
         (switch-to-buffer (get-buffer-create buff-name))
         (insert "'jq' not found\n")))
+
+    (when mermaid-docker-focus-steal-fix
+      (when (eq (executable-find "wmctrl") nil)
+        (setq failed t)
+        (save-excursion
+          (switch-to-buffer (get-buffer-create buff-name))
+          (insert "'wmctrl' not found\n"))))
 
     ;; permissions, network, etc
     (when (not (eq 0 (call-process
