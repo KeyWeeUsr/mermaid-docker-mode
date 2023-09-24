@@ -418,7 +418,28 @@
 
 (defun mermaid-docker-render-external (filename))
 
-(defun mermaid-docker-render-internal (filename))
+(defun mermaid-docker-render-internal (filename)
+  (inline)
+  (let ((out-file mermaid-docker-output)
+        (out-buff "*mermaid-docker output*"))
+
+    (when (string-equal "" out-file)
+      (setq out-file (make-temp-file nil nil ".jpg" nil)))
+
+    (url-copy-file
+     (concat
+      "http://" (md-get-ip) ":" (format "%s" mermaid-docker-port)
+      "/img/"
+      (base64-encode-string
+       (with-temp-buffer (insert-file-contents filename) (buffer-string))))
+     out-file t)
+
+    (when (string-equal "" out-file)
+      (get-buffer-create out-buff)
+      (save-excursion
+        (switch-to-buffer out-buff)
+        (insert-image (create-image out-file)))
+      (delete-file out-file))))
 
 (defun mermaid-docker-compile-file (filename)
   "Generic advice func which replaces 'mermaid-compile-file'"
