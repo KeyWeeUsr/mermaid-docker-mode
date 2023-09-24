@@ -36,6 +36,10 @@
   "https://github.com/jihchi/mermaid.ink"
   "Address for the mermaid.ink repo")
 
+(defconst mermaid-docker-image-name
+  "md-ink-offline"
+  "Name for mermaid-docker image")
+
 (defconst mermaid-docker-external
   nil
   "Use external viewer to display rendered mermaid graph")
@@ -92,13 +96,39 @@
           (kill-buffer buff-name)
         (switch-to-buffer buff-name)))))
 
+(defun md-build-docker-image ()
+  (inline)
+  (message "Build Docker image")
+  (let ((name (concat
+               (temporary-file-directory)
+               mermaid-docker-tmp-folder))
+        (buff-name "*mermaid-docker build*")
+        (failed nil))
+    ;; clean first
+    (kill-buffer (get-buffer-create buff-name))
+
+    (when (not (eq 0 (call-process
+                      "docker" nil
+                      (get-buffer-create buff-name)
+                      nil
+                      "build" "--tag" (concat mermaid-docker-image-name "-tmp")
+                      name)))
+      (progn
+        (switch-to-buffer (get-buffer-create buff-name))
+        (setq failed t)))
+    (if (eq failed t)
+        (progn
+          (switch-to-buffer (get-buffer-create buff-name))
+          (user-error "Failed to build image"))
+      (kill-buffer (get-buffer-create buff-name)))))
+
 (defun mermaid-docker-install ()
   "Install everything for mermaid-docker"
   (interactive)
   (md-check-deps)
   (md-create-temp-work-folder)
   (md-clone-mermaid-ink)
-  (message "md-build-docker-image")
+  (md-build-docker-image)
   (message "md-initial-container-run")
   (message "md-test-graph-rendering")
   (message "md-create-image-for-offline-mode")
