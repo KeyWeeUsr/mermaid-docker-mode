@@ -198,6 +198,46 @@
           (user-error "Failed to run init container"))
       (kill-buffer (get-buffer-create buff-name)))))
 
+(defun md-test-graph-rendering ()
+  (inline)
+  (message "Test graph rendering")
+  (let ((name (concat
+               (temporary-file-directory)
+               mermaid-docker-tmp-folder))
+        (buff-name "*mermaid-docker test graph*")
+        (cont-name "tmp-mermaid")
+        (failed nil))
+    ;; clean first
+    (kill-buffer (get-buffer-create buff-name))
+
+    ;; if final image is not built
+    (when (not (eq 0 (call-process
+                       "curl" nil
+                       (get-buffer-create buff-name)
+                       nil
+                       "--silent"
+                       (concat
+                        "http://127.0.0.1:"
+                        (format "%s" mermaid-docker-port)
+                        "/img/"
+                        (base64-encode-string "graph LR;A-->B&C&D;")))))
+      (progn
+        (switch-to-buffer (get-buffer-create buff-name))
+        (setq failed t)))
+    (when (not (eq 0 (call-process
+                       "docker" nil
+                       (get-buffer-create buff-name)
+                       nil
+                       "stop" cont-name)))
+      (progn
+        (switch-to-buffer (get-buffer-create buff-name))
+        (setq failed t)))
+    (if (eq failed t)
+        (progn
+          (switch-to-buffer (get-buffer-create buff-name))
+          (user-error "Failed to test graph rendering"))
+      (kill-buffer (get-buffer-create buff-name)))))
+
 (defun mermaid-docker-install ()
   "Install everything for mermaid-docker"
   (interactive)
@@ -206,7 +246,8 @@
   (md-clone-mermaid-ink)
   (md-build-docker-image)
   (md-initial-container-run)
-  (message "md-test-graph-rendering")
+  (sleep-for 5)
+  (md-test-graph-rendering)
   (message "md-create-image-for-offline-mode")
   (message "md-start-offline-mode")
   (message "md-test-graph-rendering-via-offline-mode")
