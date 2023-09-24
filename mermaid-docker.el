@@ -311,6 +311,11 @@
                          mermaid-docker-net))))
     (string-replace "\n" "" (shell-command-to-string cmd))))
 
+(defun md-get-url (body)
+  (inline)
+  (format "http://%s:%s/img/%s"
+          (md-get-ip) mermaid-docker-port (base64-encode-string body)))
+
 (defun md-test-graph-rendering-via-offline-mode ()
   (inline)
   (message "Test graph rendering via offline mode")
@@ -319,12 +324,7 @@
     (when (string-equal "" out-file)
       (setq out-file (make-temp-file nil nil ".jpg" nil)))
 
-    (url-copy-file
-     (concat
-      "http://" (md-get-ip) ":" (format "%s" mermaid-docker-port)
-      "/img/"
-      (base64-encode-string "graph LR;A-->B&C&D;"))
-     out-file t)
+    (url-copy-file (md-get-url "graph LR;A-->B&C&D;") out-file t)
 
     (when (string-equal "" out-file)
       (get-buffer-create out-buff)
@@ -339,12 +339,9 @@
   (let ((out-file (when (string-equal "" mermaid-docker-output)
                     "/tmp/mermaid.jpg"))
         (out-buff "*mermaid-docker output*"))
-    (url-copy-file
-     (concat
-      "http://" (md-get-ip) ":" (format "%s" mermaid-docker-port)
-      "/img/"
-      (base64-encode-string "graph LR;A-->B&C&D;"))
-     out-file t)
+
+    (url-copy-file (md-get-url "graph LR;A-->B&C&D;") out-file t)
+
     (start-process
      "mermaid-docker-ext" nil
      mermaid-docker-external-viewer-bin
@@ -376,12 +373,10 @@
   (let ((out-file (when (string-equal "" mermaid-docker-output)
                     "/tmp/mermaid.jpg"))
         (out-buff "*mermaid-docker output*"))
+
     (url-copy-file
-     (concat
-      "http://" (md-get-ip) ":" (format "%s" mermaid-docker-port)
-      "/img/"
-      (base64-encode-string
-       (with-temp-buffer (insert-file-contents filename) (buffer-string))))
+     (md-get-url
+      (with-temp-buffer (insert-file-contents filename) (buffer-string)))
      out-file t)
     (start-process
      "mermaid-docker-ext" nil
@@ -400,11 +395,8 @@
       (setq out-file (make-temp-file nil nil ".jpg" nil)))
 
     (url-copy-file
-     (concat
-      "http://" (md-get-ip) ":" (format "%s" mermaid-docker-port)
-      "/img/"
-      (base64-encode-string
-       (with-temp-buffer (insert-file-contents filename) (buffer-string))))
+     (md-get-url
+      (with-temp-buffer (insert-file-contents filename) (buffer-string)))
      out-file t)
 
     (when (string-equal "" out-file)
