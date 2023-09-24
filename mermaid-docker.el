@@ -267,48 +267,40 @@
     ;; clean first
     (kill-buffer (get-buffer-create buff-name))
 
-    ;; if mermaid not active
-    (call-process "docker" nil (get-buffer-create buff-name) nil
-                  "rm" "--force" cont-name)
-    (call-process "docker" nil (get-buffer-create buff-name) nil
-                  "network" "rm" net-name)
-    (when (not (eq 0 (call-process
-                      "docker" nil
-                      (get-buffer-create buff-name)
-                      nil
-                      "network" "create" "--internal" "--driver=bridge"
-                      mermaid-docker-net)))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
-        (setq failed t)))
-    (when (not (eq 0 (call-process
-                      "docker" nil
-                      (get-buffer-create buff-name)
-                      nil
-                      "run" "--name" cont-name "--detach"
-                      ;; Failed to move to new namespace: PID namespaces
-                      ;; supported, Network namespace supported, but failed:
-                      ;; errno = Operation not permitted
-                      ;;
-                      ;; Error: Failed to launch the browser process!
-                      "--cap-add=SYS_ADMIN"
-                      "--env" (concat
-                               "NODE_OPTIONS=\"--max-http-header-size="
-                               (format "%s" mermaid-docker-header-size) "\"")
-                      "--publish" (concat "127.0.0.1:"
-                                          (format "%s:%s"
-                                                  mermaid-docker-port
-                                                  mermaid-docker-port))
-                      (concat "--network=" mermaid-docker-net)
-                      mermaid-docker-image-name)))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
-        (setq failed t)))
-    (if (eq failed t)
-        (progn
-          (switch-to-buffer (get-buffer-create buff-name))
-          (user-error "Failed to start offline mode"))
-      (kill-buffer (get-buffer-create buff-name)))))
+    (when t ;; if mermaid not active
+      (md-call-cmd (get-buffer-create buff-name)
+                   '("docker" "rm" "--force" cont-name))
+      (md-call-cmd (get-buffer-create buff-name)
+                   '("docker" "network" "rm" net-name))
+
+      (when (md-call-cmd
+             (get-buffer-create buff-name)
+             '("docker" "network" "create" "--internal"
+               "--driver=bridge" mermaid-docker-net))
+        (setq failed t))
+
+      (when (md-call-cmd
+             (get-buffer-create buff-name)
+             '("docker" "run" "--name" cont-name "--detach"
+               ;; Failed to move to new namespace: PID namespaces
+               ;; supported, Network namespace supported, but failed:
+               ;; errno = Operation not permitted
+               ;;
+               ;; Error: Failed to launch the browser process!
+               "--cap-add=SYS_ADMIN"
+               "--env" (format "NODE_OPTIONS=\"--max-http-header-size=%s\""
+                               mermaid-docker-header-size)
+               "--publish" (format "127.0.0.1:%s:%s"
+                                   mermaid-docker-port mermaid-docker-port)
+               (format "--network=%s" mermaid-docker-net)
+               mermaid-docker-image-name))
+        (setq failed t))
+
+      (if (eq failed t)
+          (progn
+            (switch-to-buffer (get-buffer-create buff-name))
+            (user-error "Failed to start offline mode"))
+        (kill-buffer (get-buffer-create buff-name))))))
 
 (defun md-get-ip ()
   (inline)
