@@ -1,4 +1,4 @@
-;;; mermaid-docker.el
+;;; mermaid-docker.el --- Render mermaid graphs with Docker service
 
 ;; Copyright (C) 2023 Peter Badida
 
