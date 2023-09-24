@@ -28,9 +28,19 @@
 
 ;;; Code:
 
+(defconst mermaid-docker-external
+  nil
+  "Use external viewer to display rendered mermaid graph")
+
+(defun mermaid-docker-render-external (filename))
+
+(defun mermaid-docker-render-internal (filename))
+
 (defun mermaid-docker-compile-file (filename)
   "Generic advice func which replaces 'mermaid-compile-file'"
-  (message "Replaced"))
+  (if mermaid-docker-external
+      (mermaid-docker-render-external filename)
+    (mermaid-docker-render-internal filename)))
 
 (defun mermaid-docker-mode-activate ()
   "Activate TypewriterRoll locally to a buffer"
