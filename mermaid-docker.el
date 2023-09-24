@@ -3,8 +3,8 @@
 ;; Copyright (C) 2023 Peter Badida
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
-;; Keywords: lisp, docker, mermaid, mmd, graph, design, jpg, image, api
-;; Version: 0.0.1
+;; Keywords: docker, mermaid, mmd, graph, design, jpg, image, api
+;; Version: 1.0.0
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
