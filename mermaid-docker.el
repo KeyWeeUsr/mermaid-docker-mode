@@ -48,6 +48,10 @@
   3000
   "Port mermaid-ink service listens on")
 
+(defconst mermaid-docker-net
+  "mermaid_no_internet"
+  "Network name to use")
+
 (defconst mermaid-docker-external
   nil
   "Use external viewer to display rendered mermaid graph")
@@ -297,6 +301,62 @@
           (user-error "Failed to create offline image"))
       (kill-buffer (get-buffer-create buff-name)))))
 
+(defun md-start-offline-mode ()
+  (inline)
+  (message "Start offline mode")
+  (let ((name (concat
+               (temporary-file-directory)
+               mermaid-docker-tmp-folder))
+        (buff-name "*mermaid-docker start offline*")
+        (cont-name mermaid-docker-image-name)
+        (net-name mermaid-docker-net)
+        (failed nil))
+    ;; clean first
+    (kill-buffer (get-buffer-create buff-name))
+
+    ;; if mermaid not active
+    (call-process "docker" nil (get-buffer-create buff-name) nil
+                  "rm" "--force" cont-name)
+    (call-process "docker" nil (get-buffer-create buff-name) nil
+                  "network" "rm" net-name)
+    (when (not (eq 0 (call-process
+                      "docker" nil
+                      (get-buffer-create buff-name)
+                      nil
+                      "network" "create" "--internal" "--driver=bridge"
+                      mermaid-docker-net)))
+      (progn
+        (switch-to-buffer (get-buffer-create buff-name))
+        (setq failed t)))
+    (when (not (eq 0 (call-process
+                      "docker" nil
+                      (get-buffer-create buff-name)
+                      nil
+                      "run" "--name" cont-name "--detach"
+                      ;; Failed to move to new namespace: PID namespaces
+                      ;; supported, Network namespace supported, but failed:
+                      ;; errno = Operation not permitted
+                      ;;
+                      ;; Error: Failed to launch the browser process!
+                      "--cap-add=SYS_ADMIN"
+                      "--env" (concat
+                               "NODE_OPTIONS=\"--max-http-header-size="
+                               (format "%s" mermaid-docker-header-size) "\"")
+                      "--publish" (concat "127.0.0.1:"
+                                          (format "%s:%s"
+                                                  mermaid-docker-port
+                                                  mermaid-docker-port))
+                      (concat "--network=" mermaid-docker-net)
+                      mermaid-docker-image-name)))
+      (progn
+        (switch-to-buffer (get-buffer-create buff-name))
+        (setq failed t)))
+    (if (eq failed t)
+        (progn
+          (switch-to-buffer (get-buffer-create buff-name))
+          (user-error "Failed to start offline mode"))
+      (kill-buffer (get-buffer-create buff-name)))))
+
 (defun mermaid-docker-install ()
   "Install everything for mermaid-docker"
   (interactive)
@@ -308,7 +368,7 @@
   (sleep-for 5)
   (md-test-graph-rendering)
   (md-create-image-for-offline-mode)
-  (message "md-start-offline-mode")
+  (md-start-offline-mode)
   (message "md-test-graph-rendering-via-offline-mode")
   (message "md-test-graph-rendering-via-external-editor"))
 
