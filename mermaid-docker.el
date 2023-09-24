@@ -174,37 +174,28 @@
     ;; clean first
     (kill-buffer (get-buffer-create buff-name))
 
-    ;; if mermaid-docker-image-name is not built
-    ;; if tmp-mermaid not active
-    (call-process "docker" nil (get-buffer-create buff-name) nil
-                  "rm" "--force" cont-name)
-    (when (not (eq 0 (call-process
-                      "docker" nil
-                      (get-buffer-create buff-name)
-                      nil
-                      "run" "--name" cont-name "--detach"
-                      ;; Failed to move to new namespace: PID namespaces
-                      ;; supported, Network namespace supported, but failed:
-                      ;; errno = Operation not permitted
-                      ;;
-                      ;; Error: Failed to launch the browser process!
-                      "--cap-add=SYS_ADMIN"
-                      "--env" (concat
-                               "NODE_OPTIONS=\"--max-http-header-size="
-                               (format "%s" mermaid-docker-header-size) "\"")
-                      "--publish" (concat "127.0.0.1:"
-                                          (format "%s:%s"
-                                                  mermaid-docker-port
-                                                  mermaid-docker-port))
-                      (concat mermaid-docker-image-name "-tmp"))))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
-        (setq failed t)))
-    (if (eq failed t)
-        (progn
-          (switch-to-buffer (get-buffer-create buff-name))
-          (user-error "Failed to run init container"))
-      (kill-buffer (get-buffer-create buff-name)))))
+    (when t ;; if mermaid-docker-image-name is not built
+      (when t ;; if tmp-mermaid not active
+        (call-process "docker" nil (get-buffer-create buff-name) nil
+                      "rm" "--force" cont-name)
+        (if (md-call-cmd
+             (get-buffer-create buff-name)
+             '("docker" "run" "--name" cont-name "--detach"
+               ;; Failed to move to new namespace: PID namespaces
+               ;; supported, Network namespace supported, but failed:
+               ;; errno = Operation not permitted
+               ;;
+               ;; Error: Failed to launch the browser process!
+               "--cap-add=SYS_ADMIN"
+               "--env" (format "NODE_OPTIONS=\"--max-http-header-size=%s\""
+                               mermaid-docker-header-size)
+               "--publish" (format "127.0.0.1:%s:%s"
+                                   mermaid-docker-port mermaid-docker-port)
+               (concat mermaid-docker-image-name "-tmp")))
+            (progn
+              (switch-to-buffer (get-buffer-create buff-name))
+              (user-error "Failed to run init container"))
+          (kill-buffer (get-buffer-create buff-name)))))))
 
 (defun md-test-graph-rendering ()
   (inline)
