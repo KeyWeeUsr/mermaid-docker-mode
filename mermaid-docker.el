@@ -74,8 +74,8 @@
 
 (defun md-check-bin (buff-name cmd)
   (inline)
-  (when (eq (executable-find "git") nil)
-      (save-excursion
+  (when (eq (executable-find cmd) nil)
+      (save-window-excursion
         (switch-to-buffer (get-buffer-create buff-name))
         (insert (format "'%s' not found\n" cmd)))
       t))
@@ -330,7 +330,7 @@
 
     (when (string-equal "" out-file)
       (get-buffer-create out-buff)
-      (save-excursion
+      (save-window-excursion
         (switch-to-buffer out-buff)
         (insert-image (create-image out-file)))
       (delete-file out-file))))
@@ -403,7 +403,7 @@
 
     (when (string-equal "" out-file)
       (get-buffer-create out-buff)
-      (save-excursion
+      (save-window-excursion
         (switch-to-buffer out-buff)
         (insert-image (create-image out-file)))
       (delete-file out-file))))
