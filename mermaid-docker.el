@@ -457,7 +457,25 @@
       (message "Failed to display in Emacs, trying external program")
       (md-test-graph-rendering-via-external-editor))))
 
-(defun mermaid-docker-render-external (filename))
+(defun mermaid-docker-render-external (filename)
+  (inline)
+  (let ((out-file (when (string-equal "" mermaid-docker-output)
+                    "/tmp/mermaid.jpg"))
+        (out-buff "*mermaid-docker output*"))
+    (url-copy-file
+     (concat
+      "http://" (md-get-ip) ":" (format "%s" mermaid-docker-port)
+      "/img/"
+      (base64-encode-string
+       (with-temp-buffer (insert-file-contents filename) (buffer-string))))
+     out-file t)
+    (start-process
+     "mermaid-docker-ext" nil
+     mermaid-docker-external-viewer-bin
+     out-file)
+    (when mermaid-docker-focus-steal-fix
+      (sleep-for 0 mermaid-docker-focus-steal-ms)
+      (start-process "fix-focus-steal" nil "wmctrl" "-a" "emacs"))))
 
 (defun mermaid-docker-render-internal (filename)
   (inline)
