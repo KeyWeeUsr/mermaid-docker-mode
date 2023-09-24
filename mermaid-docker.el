@@ -32,6 +32,10 @@
   "mermaid-docker"
   "Name for /tmp/<folder>")
 
+(defconst mermaid-docker-git-repo
+  "https://github.com/jihchi/mermaid.ink"
+  "Address for the mermaid.ink repo")
+
 (defconst mermaid-docker-external
   nil
   "Use external viewer to display rendered mermaid graph")
@@ -66,12 +70,28 @@
     (when (not (file-exists-p name))
       (make-directory name))))
 
+(defun md-clone-mermaid-ink ()
+  (inline)
+  (message "Clone mermaid-ink")
+  (let ((name (concat
+               (temporary-file-directory)
+               mermaid-docker-tmp-folder))
+        (buff-name "*mermaid-docker clone*"))
+    (if (file-exists-p (concat name "/.git"))
+        (message "Skipping, already cloned")
+      (if (eq 0 (call-process
+                 "git" nil (get-buffer-create buff-name) nil
+                 "clone" "--quiet" "--depth" "1"
+                 mermaid-docker-git-repo name))
+          (kill-buffer buff-name)
+        (switch-to-buffer buff-name)))))
+
 (defun mermaid-docker-install ()
   "Install everything for mermaid-docker"
   (interactive)
   (md-check-deps)
   (md-create-temp-work-folder)
-  (message "md-clone-mermaid-ink")
+  (md-clone-mermaid-ink)
   (message "md-build-docker-image")
   (message "md-initial-container-run")
   (message "md-test-graph-rendering")
