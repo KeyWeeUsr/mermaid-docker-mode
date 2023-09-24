@@ -32,6 +32,20 @@
   nil
   "Use external viewer to display rendered mermaid graph")
 
+(defun mermaid-docker-install ()
+  "Install everything for mermaid-docker"
+  (interactive)
+  (message "md-check-deps")
+  (message "md-create-temp-work-folder")
+  (message "md-clone-mermaid-ink")
+  (message "md-build-docker-image")
+  (message "md-initial-container-run")
+  (message "md-test-graph-rendering")
+  (message "md-create-image-for-offline-mode")
+  (message "md-start-offline-mode")
+  (message "md-test-graph-rendering-via-offline-mode")
+  (message "md-test-graph-rendering-via-external-editor"))
+
 (defun mermaid-docker-render-external (filename))
 
 (defun mermaid-docker-render-internal (filename))
