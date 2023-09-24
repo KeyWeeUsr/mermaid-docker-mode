@@ -138,12 +138,12 @@
         (buff-name "*mermaid-docker clone*"))
     (if (file-exists-p (concat name "/.git"))
         (message "Skipping, already cloned")
-      (if (eq 0 (call-process
-                 "git" nil (get-buffer-create buff-name) nil
-                 "clone" "--quiet" "--depth" "1"
-                 mermaid-docker-git-repo name))
-          (kill-buffer buff-name)
-        (switch-to-buffer buff-name)))))
+      (if (md-call-cmd
+           (get-buffer-create buff-name)
+           '("git" "clone" "--quiet" "--depth" "1"
+             mermaid-docker-git-repo name))
+          (switch-to-buffer buff-name)
+        (kill-buffer buff-name)))))
 
 (defun md-build-docker-image ()
   (inline)
