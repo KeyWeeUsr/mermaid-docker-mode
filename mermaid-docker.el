@@ -209,28 +209,19 @@
     ;; clean first
     (kill-buffer (get-buffer-create buff-name))
 
-    ;; if final image is not built
-    (when (not (eq 0 (call-process
-                       "curl" nil
-                       (get-buffer-create buff-name)
-                       nil
-                       "--silent"
-                       (concat
-                        "http://127.0.0.1:"
-                        (format "%s" mermaid-docker-port)
-                        "/img/"
-                        (base64-encode-string "graph LR;A-->B&C&D;")))))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
+    (when t ;; if final image is not built
+      (when (md-call-cmd
+             (get-buffer-create buff-name)
+             '("curl" "--silent"
+               (format "http://127.0.0.1:%s/img/%s"
+                       mermaid-docker-port
+                       (base64-encode-string "graph LR;A-->B&C&D;"))))
+        (setq failed t))
+
+      (when (md-call-cmd (get-buffer-create buff-name)
+                         '("docker" "stop" cont-name))
         (setq failed t)))
-    (when (not (eq 0 (call-process
-                       "docker" nil
-                       (get-buffer-create buff-name)
-                       nil
-                       "stop" cont-name)))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
-        (setq failed t)))
+
     (if (eq failed t)
         (progn
           (switch-to-buffer (get-buffer-create buff-name))
