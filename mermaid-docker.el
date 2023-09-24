@@ -28,6 +28,10 @@
 
 ;;; Code:
 
+(defconst mermaid-docker-tmp-folder
+  "mermaid-docker"
+  "Name for /tmp/<folder>")
+
 (defconst mermaid-docker-external
   nil
   "Use external viewer to display rendered mermaid graph")
@@ -53,11 +57,20 @@
           (user-error "Some deps are missing"))
       (kill-buffer (get-buffer-create buff-name)))))
 
+(defun md-create-temp-work-folder ()
+  (inline)
+  (message "Create temp work folder")
+  (let ((name (concat
+               (temporary-file-directory)
+               mermaid-docker-tmp-folder)))
+    (when (not (file-exists-p name))
+      (make-directory name))))
+
 (defun mermaid-docker-install ()
   "Install everything for mermaid-docker"
   (interactive)
   (md-check-deps)
-  (message "md-create-temp-work-folder")
+  (md-create-temp-work-folder)
   (message "md-clone-mermaid-ink")
   (message "md-build-docker-image")
   (message "md-initial-container-run")
