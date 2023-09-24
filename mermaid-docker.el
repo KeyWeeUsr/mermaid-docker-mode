@@ -1,10 +1,12 @@
-;;; mermaid-docker.el --- Render mermaid graphs with Docker service
+;;; mermaid-docker.el --- Render mermaid graphs with Docker service -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023 Peter Badida
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
-;; Keywords: docker, mermaid, mmd, graph, design, jpg, image, api
+;; Keywords: convenience, docker, mermaid, mmd, graph, design, jpg, image, api
 ;; Version: 1.0.0
+;; Package-Requires: ((emacs "26.1"))
+;; Homepage: https://github.com/KeyWeeUsr/mermaid-docker-mode
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -30,35 +32,35 @@
 
 (defconst mermaid-docker-tmp-folder
   "mermaid-docker"
-  "Name for /tmp/<folder>")
+  "Name for /tmp/<folder>.")
 
 (defconst mermaid-docker-git-repo
   "https://github.com/jihchi/mermaid.ink"
-  "Address for the mermaid.ink repo")
+  "Address for the mermaid.ink repo.")
 
 (defconst mermaid-docker-image-name
   "md-ink-offline"
-  "Name for mermaid-docker image")
+  "Name for mermaid-docker image.")
 
 (defconst mermaid-docker-header-size
   102400000
-  "Node.js option --max-http-header-size")
+  "Node.js option --max-http-header-size.")
 
 (defconst mermaid-docker-port
   3000
-  "Port mermaid-ink service listens on")
+  "Port mermaid-ink service listens on.")
 
 (defconst mermaid-docker-net
   "mermaid_no_internet"
-  "Network name to use")
+  "Network name to use.")
 
 (defconst mermaid-docker-output
   ""
-  "Default file output ('' / empty string)")
+  "Default file output ('' / empty string).")
 
 (defconst mermaid-docker-external-viewer-bin
   "/usr/bin/xviewer"
-  "Path to external image viewer")
+  "Path to external image viewer.")
 
 (defconst mermaid-docker-focus-steal-fix
   t
@@ -66,13 +68,16 @@
 
 (defconst mermaid-docker-focus-steal-ms
   200
-  "Milliseconds to wait before stealing focus back")
+  "Milliseconds to wait before stealing focus back.")
 
 (defconst mermaid-docker-external
   t
-  "Use external viewer to display rendered mermaid graph")
+  "Use external viewer to display rendered mermaid graph.")
 
-(defun md-check-bin (buff-name cmd)
+(defun mermaid-docker-check-bin (buff-name cmd)
+  "Check if a binary is present on the system.
+Argument BUFF-NAME destination to write failure to.
+Argument CMD name of the checked binary."
   (inline)
   (when (eq (executable-find cmd) nil)
       (save-window-excursion
@@ -80,7 +85,10 @@
         (insert (format "'%s' not found\n" cmd)))
       t))
 
-(defun md-call-cmd (buff-name cmd-list &optional input)
+(defun mermaid-docker-call-cmd (buff-name cmd-list &optional input)
+  "Call a command with optional INPUT piping and write result back.
+Argument BUFF-NAME destination to write output to.
+Argument CMD-LIST list of strings as a command+args to execute."
   (inline)
   (when (or (eq input nil) (eq input t)) (setq input ""))
   (let ((args (list)))
@@ -88,9 +96,10 @@
                         (get-buffer-create buff-name) nil))
       (if (eq args nil) (setq args (list item)) (push item args)))
     (dolist (arg cmd-list) (push arg args))
-    (when (not (eq 0 (apply #'call-process-region (reverse args)))) t)))
+    (unless (eq 0 (apply #'call-process-region (reverse args)))) t))
 
-(defun md-check-deps ()
+(defun mermaid-docker-check-deps ()
+  "Check if all deps are present on the system."
   (inline)
   (message "Checking deps for mermaid-docker")
   (let ((buff-name "*mermaid-docker deps*")
@@ -101,7 +110,7 @@
 
     ;; binaries
     (dolist (item '("git" "docker" "curl" "jq" "wmctrl"))
-      (when (md-check-bin buff-name item) (setq failed t)))
+      (when (mermaid-docker-check-bin buff-name item) (setq failed t)))
 
     ;; permissions, network, etc
     (dolist
@@ -114,7 +123,7 @@
                (list nil "docker" "network" "rm" net-name)))
       (let ((tmp nil))
         (setq tmp (pop item))
-        (when (md-call-cmd buff-name item tmp) (setq failed t))))
+        (when (mermaid-docker-call-cmd buff-name item tmp) (setq failed t))))
 
     (if (eq failed t)
         (progn
@@ -122,16 +131,18 @@
           (user-error "Some deps are missing"))
       (kill-buffer (get-buffer-create buff-name)))))
 
-(defun md-create-temp-work-folder ()
+(defun mermaid-docker-create-temp-work-folder ()
+  "Create temporary work folder."
   (inline)
   (message "Create temp work folder")
   (let ((name (concat
                (temporary-file-directory)
                mermaid-docker-tmp-folder)))
-    (when (not (file-exists-p name))
-      (make-directory name))))
+    (unless (file-exists-p name))
+      (make-directory name)))
 
-(defun md-clone-mermaid-ink ()
+(defun mermaid-docker-clone-mermaid-ink ()
+  "Clone mermaid.ink repository to work folder."
   (inline)
   (message "Clone mermaid-ink")
   (let ((name (concat
@@ -140,14 +151,15 @@
         (buff-name "*mermaid-docker clone*"))
     (if (file-exists-p (concat name "/.git"))
         (message "Skipping, already cloned")
-      (if (md-call-cmd
+      (if (mermaid-docker-call-cmd
            (get-buffer-create buff-name)
            (list "git" "clone" "--quiet" "--depth" "1"
                  mermaid-docker-git-repo name))
           (switch-to-buffer buff-name)
         (kill-buffer buff-name)))))
 
-(defun md-build-docker-image ()
+(defun mermaid-docker-build-docker-image ()
+  "Build mermaid.ink image in work folder."
   (inline)
   (message "Build Docker image")
   (let ((name (concat
@@ -158,7 +170,7 @@
     ;; clean first
     (kill-buffer (get-buffer-create buff-name))
 
-    (if (md-call-cmd
+    (if (mermaid-docker-call-cmd
            (get-buffer-create buff-name)
            (list "docker" "build" "--tag"
                  (concat mermaid-docker-image-name "-tmp") name))
@@ -167,7 +179,8 @@
           (user-error "Failed to build image"))
       (kill-buffer (get-buffer-create buff-name)))))
 
-(defun md-initial-container-run ()
+(defun mermaid-docker-initial-container-run ()
+  "Run initial container to download deps and check rendering."
   (inline)
   (message "Initial container run (necessary ping to the Internet)")
   (let ((buff-name "*mermaid-docker initial run*")
@@ -180,7 +193,7 @@
       (when t ;; if tmp-mermaid not active
         (call-process "docker" nil (get-buffer-create buff-name) nil
                       "rm" "--force" cont-name)
-        (if (md-call-cmd
+        (if (mermaid-docker-call-cmd
              (get-buffer-create buff-name)
              (list "docker" "run" "--name" cont-name "--detach"
                    ;; Failed to move to new namespace: PID namespaces
@@ -199,7 +212,8 @@
               (user-error "Failed to run init container"))
           (kill-buffer (get-buffer-create buff-name)))))))
 
-(defun md-test-graph-rendering ()
+(defun mermaid-docker-test-graph-rendering ()
+  "Test graph rendering."
   (inline)
   (message "Test graph rendering")
   (let ((name (concat
@@ -212,7 +226,7 @@
     (kill-buffer (get-buffer-create buff-name))
 
     (when t ;; if final image is not built
-      (when (md-call-cmd
+      (when (mermaid-docker-call-cmd
              (get-buffer-create buff-name)
              (list "curl" "--silent"
                    (format "http://127.0.0.1:%s/img/%s"
@@ -220,7 +234,7 @@
                            (base64-encode-string "graph LR;A-->B&C&D;"))))
         (setq failed t))
 
-      (when (md-call-cmd (get-buffer-create buff-name)
+      (when (mermaid-docker-call-cmd (get-buffer-create buff-name)
                          (list "docker" "stop" cont-name))
         (setq failed t)))
 
@@ -230,7 +244,8 @@
           (user-error "Failed to test graph rendering"))
       (kill-buffer (get-buffer-create buff-name)))))
 
-(defun md-create-image-for-offline-mode ()
+(defun mermaid-docker-create-image-for-offline-mode ()
+  "Create new Docker image from initial container for offline running."
   (inline)
   (message "Create image for offline mode")
   (let ((name (concat
@@ -243,12 +258,12 @@
     (kill-buffer (get-buffer-create buff-name))
 
     (when t ;; if final image is not built
-      (when (md-call-cmd
+      (when (mermaid-docker-call-cmd
              (get-buffer-create buff-name)
              (list "docker" "commit" cont-name
                    mermaid-docker-image-name))
           (setq failed t))
-      (md-call-cmd (get-buffer-create buff-name)
+      (mermaid-docker-call-cmd (get-buffer-create buff-name)
                    (list "docker" "rm" "--force" cont-name))
       (if (eq failed t)
           (progn
@@ -256,7 +271,8 @@
             (user-error "Failed to create offline image"))
         (kill-buffer (get-buffer-create buff-name))))))
 
-(defun md-start-offline-mode ()
+(defun mermaid-docker-start-offline-mode ()
+  "Start a Docker container with separate network and no Internet access."
   (inline)
   (message "Start offline mode")
   (let ((name (concat
@@ -270,18 +286,18 @@
     (kill-buffer (get-buffer-create buff-name))
 
     (when t ;; if mermaid not active
-      (md-call-cmd (get-buffer-create buff-name)
+      (mermaid-docker-call-cmd (get-buffer-create buff-name)
                    (list "docker" "rm" "--force" cont-name))
-      (md-call-cmd (get-buffer-create buff-name)
+      (mermaid-docker-call-cmd (get-buffer-create buff-name)
                    (list "docker" "network" "rm" net-name))
 
-      (when (md-call-cmd
+      (when (mermaid-docker-call-cmd
              (get-buffer-create buff-name)
              (list "docker" "network" "create" "--internal"
                    "--driver=bridge" mermaid-docker-net))
         (setq failed t))
 
-      (when (md-call-cmd
+      (when (mermaid-docker-call-cmd
              (get-buffer-create buff-name)
              (list "docker" "run" "--name" cont-name "--detach"
                    ;; Failed to move to new namespace: PID namespaces
@@ -304,7 +320,8 @@
             (user-error "Failed to start offline mode"))
         (kill-buffer (get-buffer-create buff-name))))))
 
-(defun md-get-ip ()
+(defun mermaid-docker-get-ip ()
+  "Get current IP of a running mermaid-docker container."
   (inline)
   (let ((cmd
          (format "docker inspect %s | jq -r %s"
@@ -313,12 +330,17 @@
                          mermaid-docker-net))))
     (string-replace "\n" "" (shell-command-to-string cmd))))
 
-(defun md-get-url (body)
+(defun mermaid-docker-get-url (body)
+  "Assemble URL for rendering Mermaid graph.
+Argument BODY raw string of a Mermaid graph."
   (inline)
   (format "http://%s:%s/img/%s"
-          (md-get-ip) mermaid-docker-port (base64-encode-string body)))
+          (mermaid-docker-get-ip)
+          mermaid-docker-port
+          (base64-encode-string body)))
 
-(defun md-test-graph-rendering-via-offline-mode ()
+(defun mermaid-docker-test-graph-rendering-via-offline-mode ()
+  "Test graph rendering with offline container."
   (inline)
   (message "Test graph rendering via offline mode")
   (let ((out-file mermaid-docker-output)
@@ -326,7 +348,7 @@
     (when (string-equal "" out-file)
       (setq out-file (make-temp-file nil nil ".jpg" nil)))
 
-    (url-copy-file (md-get-url "graph LR;A-->B&C&D;") out-file t)
+    (url-copy-file (mermaid-docker-get-url "graph LR;A-->B&C&D;") out-file t)
 
     (when (string-equal "" out-file)
       (get-buffer-create out-buff)
@@ -335,14 +357,15 @@
         (insert-image (create-image out-file)))
       (delete-file out-file))))
 
-(defun md-test-graph-rendering-via-external-editor ()
+(defun mermaid-docker-test-graph-rendering-via-external-editor ()
+  "Test graph rendering via external editor."
   (inline)
   (message "Test graph rendering via external editor")
   (let ((out-file (when (string-equal "" mermaid-docker-output)
                     "/tmp/mermaid.jpg"))
         (out-buff "*mermaid-docker output*"))
 
-    (url-copy-file (md-get-url "graph LR;A-->B&C&D;") out-file t)
+    (url-copy-file (mermaid-docker-get-url "graph LR;A-->B&C&D;") out-file t)
 
     (start-process
      "mermaid-docker-ext" nil
@@ -353,31 +376,33 @@
       (start-process "fix-focus-steal" nil "wmctrl" "-a" "emacs"))))
 
 (defun mermaid-docker-install ()
-  "Install everything for mermaid-docker"
+  "Install everything for mermaid-docker."
   (interactive)
-  (md-check-deps)
-  (md-create-temp-work-folder)
-  (md-clone-mermaid-ink)
-  (md-build-docker-image)
-  (md-initial-container-run)
+  (mermaid-docker-check-deps)
+  (mermaid-docker-create-temp-work-folder)
+  (mermaid-docker-clone-mermaid-ink)
+  (mermaid-docker-build-docker-image)
+  (mermaid-docker-initial-container-run)
   (sleep-for 5)
-  (md-test-graph-rendering)
-  (md-create-image-for-offline-mode)
-  (md-start-offline-mode)
+  (mermaid-docker-test-graph-rendering)
+  (mermaid-docker-create-image-for-offline-mode)
+  (mermaid-docker-start-offline-mode)
   (sleep-for 2)
-  (when (eq nil (md-test-graph-rendering-via-offline-mode))
+  (when (eq nil (mermaid-docker-test-graph-rendering-via-offline-mode))
     (progn
       (message "Failed to display in Emacs, trying external program")
-      (md-test-graph-rendering-via-external-editor))))
+      (mermaid-docker-test-graph-rendering-via-external-editor))))
 
 (defun mermaid-docker-render-external (filename)
+  "Render a Mermaid graph via external program.
+Argument FILENAME filename to save the output as."
   (inline)
   (let ((out-file (when (string-equal "" mermaid-docker-output)
                     "/tmp/mermaid.jpg"))
         (out-buff "*mermaid-docker output*"))
 
     (url-copy-file
-     (md-get-url
+     (mermaid-docker-get-url
       (with-temp-buffer (insert-file-contents filename) (buffer-string)))
      out-file t)
     (start-process
@@ -389,6 +414,8 @@
       (start-process "fix-focus-steal" nil "wmctrl" "-a" "emacs"))))
 
 (defun mermaid-docker-render-internal (filename)
+  "Render a Mermaid graph internally in Emacs.
+Argument FILENAME (temporary) filename to save the output as."
   (inline)
   (let ((out-file mermaid-docker-output)
         (out-buff "*mermaid-docker output*"))
@@ -397,7 +424,7 @@
       (setq out-file (make-temp-file nil nil ".jpg" nil)))
 
     (url-copy-file
-     (md-get-url
+     (mermaid-docker-get-url
       (with-temp-buffer (insert-file-contents filename) (buffer-string)))
      out-file t)
 
@@ -409,20 +436,21 @@
       (delete-file out-file))))
 
 (defun mermaid-docker-compile-file (filename)
-  "Generic advice func which replaces 'mermaid-compile-file'"
+  "Generic advice func to replace 'mermaid-compile-file'.
+Argument FILENAME mermaid-compile-file input arg."
   (if mermaid-docker-external
       (mermaid-docker-render-external filename)
     (mermaid-docker-render-internal filename)))
 
 (defun mermaid-docker-mode-activate ()
-  "Activate TypewriterRoll locally to a buffer"
+  "Activate `mermaid-docker-mode` locally to a buffer."
   (inline)
   (advice-add
    'mermaid-compile-file
    :override #'mermaid-docker-compile-file))
 
 (defun mermaid-docker-mode-deactivate ()
-  "Dectivate TypewriterRoll locally to a buffer"
+  "Dectivate `mermaid-docker-mode` locally to a buffer."
   (inline)
   (advice-remove
    'mermaid-compile-file
