@@ -64,6 +64,10 @@
   t
   "Should attempt to fix focus stealing?")
 
+(defconst mermaid-docker-focus-steal-ms
+  200
+  "Milliseconds to wait before stealing focus back")
+
 (defconst mermaid-docker-external
   nil
   "Use external viewer to display rendered mermaid graph")
@@ -430,7 +434,10 @@
     (start-process
      "mermaid-docker-ext" nil
      mermaid-docker-external-viewer-bin
-     out-file)))
+     out-file)
+    (when mermaid-docker-focus-steal-fix
+      (sleep-for 0 mermaid-docker-focus-steal-ms)
+      (start-process "fix-focus-steal" nil "wmctrl" "-a" "emacs"))))
 
 (defun mermaid-docker-install ()
   "Install everything for mermaid-docker"
