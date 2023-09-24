@@ -4,7 +4,7 @@
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: convenience, docker, mermaid, mmd, graph, design, jpg, image, api
-;; Version: 1.0.0
+;; Version: 1.1.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Homepage: https://github.com/KeyWeeUsr/mermaid-docker-mode
 
@@ -74,6 +74,18 @@
   t
   "Use external viewer to display rendered mermaid graph.")
 
+(defconst mermaid-docker-purge-on-exit
+  t
+  "Purge all running containers on Emacs exit")
+
+(defconst mermaid-docker-http-attempts
+  30
+  "Default number of attempts to try contacting the container.")
+
+(defconst mermaid-docker-http-wait-ms
+  0.2
+  "Default time to wait between HTTP requests to the container.")
+
 (defun mermaid-docker-check-bin (buff-name cmd)
   "Check if a binary is present on the system.
 Argument BUFF-NAME destination to write failure to.
@@ -109,7 +121,7 @@ Argument CMD-LIST list of strings as a command+args to execute."
     (kill-buffer (get-buffer-create buff-name))
 
     ;; binaries
-    (dolist (item '("git" "docker" "curl" "jq" "wmctrl"))
+    (dolist (item '("git" "docker" "jq" "wmctrl"))
       (when (mermaid-docker-check-bin buff-name item) (setq failed t)))
 
     ;; permissions, network, etc
@@ -138,8 +150,8 @@ Argument CMD-LIST list of strings as a command+args to execute."
   (let ((name (concat
                (temporary-file-directory)
                mermaid-docker-tmp-folder)))
-    (unless (file-exists-p name))
-      (make-directory name)))
+    (unless (file-exists-p name)
+      (make-directory name))))
 
 (defun mermaid-docker-clone-mermaid-ink ()
   "Clone mermaid.ink repository to work folder."
@@ -212,6 +224,26 @@ Argument CMD-LIST list of strings as a command+args to execute."
               (user-error "Failed to run init container"))
           (kill-buffer (get-buffer-create buff-name)))))))
 
+(defun mermaid-docker-http-request (url &optional output)
+  "Send HTTP request to DEST with BODY to dump rendered image to OUTPUT."
+  (inline)
+  (let ((attempts mermaid-docker-http-attempts)
+        (ok nil))
+    (while (and (not ok) (> attempts 0))
+      (setq attempts (1- attempts))
+      (condition-case
+          err
+          (progn
+            (if (eq output nil)
+                (url-retrieve-synchronously url)
+              (url-copy-file url output t))
+            (setq ok t))
+        (error
+         (message (format "Ignoring: %s" err))
+         (sleep-for mermaid-docker-http-wait-ms))))
+    (unless ok
+      (error (format "Failed request: %s %s" dest body)))))
+
 (defun mermaid-docker-test-graph-rendering ()
   "Test graph rendering."
   (inline)
@@ -226,13 +258,10 @@ Argument CMD-LIST list of strings as a command+args to execute."
     (kill-buffer (get-buffer-create buff-name))
 
     (when t ;; if final image is not built
-      (when (mermaid-docker-call-cmd
-             (get-buffer-create buff-name)
-             (list "curl" "--silent"
-                   (format "http://127.0.0.1:%s/img/%s"
-                           mermaid-docker-port
-                           (base64-encode-string "graph LR;A-->B&C&D;"))))
-        (setq failed t))
+      (mermaid-docker-http-request
+       (format "http://127.0.0.1:%s/img/%s"
+               mermaid-docker-port
+               (base64-encode-string "graph LR;A-->B&C&D;")))
 
       (when (mermaid-docker-call-cmd (get-buffer-create buff-name)
                          (list "docker" "stop" cont-name))
@@ -348,7 +377,8 @@ Argument BODY raw string of a Mermaid graph."
     (when (string-equal "" out-file)
       (setq out-file (make-temp-file nil nil ".jpg" nil)))
 
-    (url-copy-file (mermaid-docker-get-url "graph LR;A-->B&C&D;") out-file t)
+    (mermaid-docker-http-request (mermaid-docker-get-url "graph LR;A-->B&C&D;")
+                                 out-file)
 
     (when (string-equal "" out-file)
       (get-buffer-create out-buff)
@@ -365,7 +395,8 @@ Argument BODY raw string of a Mermaid graph."
                     "/tmp/mermaid.jpg"))
         (out-buff "*mermaid-docker output*"))
 
-    (url-copy-file (mermaid-docker-get-url "graph LR;A-->B&C&D;") out-file t)
+    (mermaid-docker-http-request (mermaid-docker-get-url "graph LR;A-->B&C&D;")
+                                 out-file)
 
     (start-process
      "mermaid-docker-ext" nil
@@ -383,15 +414,14 @@ Argument BODY raw string of a Mermaid graph."
   (mermaid-docker-clone-mermaid-ink)
   (mermaid-docker-build-docker-image)
   (mermaid-docker-initial-container-run)
-  (sleep-for 5)
   (mermaid-docker-test-graph-rendering)
   (mermaid-docker-create-image-for-offline-mode)
   (mermaid-docker-start-offline-mode)
-  (sleep-for 2)
   (when (eq nil (mermaid-docker-test-graph-rendering-via-offline-mode))
     (progn
       (message "Failed to display in Emacs, trying external program")
-      (mermaid-docker-test-graph-rendering-via-external-editor))))
+      (mermaid-docker-test-graph-rendering-via-external-editor)))
+  (message "Successfully installed"))
 
 (defun mermaid-docker-render-external (filename)
   "Render a Mermaid graph via external program.
@@ -401,10 +431,11 @@ Argument FILENAME filename to save the output as."
                     "/tmp/mermaid.jpg"))
         (out-buff "*mermaid-docker output*"))
 
-    (url-copy-file
-     (mermaid-docker-get-url
-      (with-temp-buffer (insert-file-contents filename) (buffer-string)))
-     out-file t)
+    (mermaid-docker-http-request
+     (mermaid-docker-get-url (with-temp-buffer
+                               (insert-file-contents filename)
+                               (buffer-string)))
+                             out-file)
     (start-process
      "mermaid-docker-ext" nil
      mermaid-docker-external-viewer-bin
@@ -423,10 +454,11 @@ Argument FILENAME (temporary) filename to save the output as."
     (when (string-equal "" out-file)
       (setq out-file (make-temp-file nil nil ".jpg" nil)))
 
-    (url-copy-file
-     (mermaid-docker-get-url
-      (with-temp-buffer (insert-file-contents filename) (buffer-string)))
-     out-file t)
+    (mermaid-docker-http-request
+     (mermaid-docker-get-url (with-temp-buffer
+                               (insert-file-contents filename)
+                               (buffer-string))
+                             out-file))
 
     (when (string-equal "" out-file)
       (get-buffer-create out-buff)
