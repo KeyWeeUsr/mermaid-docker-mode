@@ -96,7 +96,7 @@ Argument CMD-LIST list of strings as a command+args to execute."
                         (get-buffer-create buff-name) nil))
       (if (eq args nil) (setq args (list item)) (push item args)))
     (dolist (arg cmd-list) (push arg args))
-    (unless (eq 0 (apply #'call-process-region (reverse args)))) t))
+    (unless (eq 0 (apply #'call-process-region (reverse args))) t)))
 
 (defun mermaid-docker-check-deps ()
   "Check if all deps are present on the system."
