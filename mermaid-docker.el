@@ -69,7 +69,7 @@
   "Milliseconds to wait before stealing focus back")
 
 (defconst mermaid-docker-external
-  nil
+  t
   "Use external viewer to display rendered mermaid graph")
 
 (defun md-check-bin (buff-name cmd)
