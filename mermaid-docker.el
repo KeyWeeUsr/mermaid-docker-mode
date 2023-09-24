@@ -40,6 +40,14 @@
   "md-ink-offline"
   "Name for mermaid-docker image")
 
+(defconst mermaid-docker-header-size
+  102400000
+  "Node.js option --max-http-header-size")
+
+(defconst mermaid-docker-port
+  3000
+  "Port mermaid-ink service listens on")
+
 (defconst mermaid-docker-external
   nil
   "Use external viewer to display rendered mermaid graph")
@@ -142,6 +150,47 @@
           (user-error "Failed to build image"))
       (kill-buffer (get-buffer-create buff-name)))))
 
+(defun md-initial-container-run ()
+  (inline)
+  (message "Initial container run (necessary ping to the Internet)")
+  (let ((buff-name "*mermaid-docker initial run*")
+        (cont-name "tmp-mermaid")
+        (failed nil))
+    ;; clean first
+    (kill-buffer (get-buffer-create buff-name))
+
+    ;; if mermaid-docker-image-name is not built
+    ;; if tmp-mermaid not active
+    (call-process "docker" nil (get-buffer-create buff-name) nil
+                  "rm" "--force" cont-name)
+    (when (not (eq 0 (call-process
+                      "docker" nil
+                      (get-buffer-create buff-name)
+                      nil
+                      "run" "--name" cont-name "--detach"
+                      ;; Failed to move to new namespace: PID namespaces
+                      ;; supported, Network namespace supported, but failed:
+                      ;; errno = Operation not permitted
+                      ;;
+                      ;; Error: Failed to launch the browser process!
+                      "--cap-add=SYS_ADMIN"
+                      "--env" (concat
+                               "NODE_OPTIONS=\"--max-http-header-size="
+                               (format "%s" mermaid-docker-header-size) "\"")
+                      "--publish" (concat "127.0.0.1:"
+                                          (format "%s:%s"
+                                                  mermaid-docker-port
+                                                  mermaid-docker-port))
+                      (concat mermaid-docker-image-name "-tmp"))))
+      (progn
+        (switch-to-buffer (get-buffer-create buff-name))
+        (setq failed t)))
+    (if (eq failed t)
+        (progn
+          (switch-to-buffer (get-buffer-create buff-name))
+          (user-error "Failed to run init container"))
+      (kill-buffer (get-buffer-create buff-name)))))
+
 (defun mermaid-docker-install ()
   "Install everything for mermaid-docker"
   (interactive)
@@ -149,7 +198,7 @@
   (md-create-temp-work-folder)
   (md-clone-mermaid-ink)
   (md-build-docker-image)
-  (message "md-initial-container-run")
+  (md-initial-container-run)
   (message "md-test-graph-rendering")
   (message "md-create-image-for-offline-mode")
   (message "md-start-offline-mode")
