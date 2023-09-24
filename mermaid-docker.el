@@ -304,14 +304,12 @@
 
 (defun md-get-ip ()
   (inline)
-  (string-replace
-   "\n" ""
-   (shell-command-to-string
-    (concat "docker inspect "
-            mermaid-docker-image-name
-            " | jq -r .[].NetworkSettings.Networks."
-            mermaid-docker-net
-            ".IPAddress"))))
+  (let ((cmd
+         (format "docker inspect %s | jq -r %s"
+                 mermaid-docker-image-name
+                 (format ".[].NetworkSettings.Networks.%s.IPAddress"
+                         mermaid-docker-net))))
+    (string-replace "\n" "" (shell-command-to-string cmd))))
 
 (defun md-test-graph-rendering-via-offline-mode ()
   (inline)
