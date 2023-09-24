@@ -52,6 +52,10 @@
   "mermaid_no_internet"
   "Network name to use")
 
+(defconst mermaid-docker-output
+  ""
+  "Default file output ('' / empty string)")
+
 (defconst mermaid-docker-external
   nil
   "Use external viewer to display rendered mermaid graph")
@@ -363,6 +367,39 @@
           (user-error "Failed to start offline mode"))
       (kill-buffer (get-buffer-create buff-name)))))
 
+(defun md-get-ip ()
+  (inline)
+  (string-replace
+   "\n" ""
+   (shell-command-to-string
+    (concat "docker inspect "
+            mermaid-docker-image-name
+            " | jq -r .[].NetworkSettings.Networks."
+            mermaid-docker-net
+            ".IPAddress"))))
+
+(defun md-test-graph-rendering-via-offline-mode ()
+  (inline)
+  (message "Test graph rendering via offline mode")
+  (let ((out-file mermaid-docker-output)
+        (out-buff "*mermaid-docker output*"))
+    (when (string-equal "" out-file)
+      (setq out-file (make-temp-file nil nil ".jpg" nil)))
+
+    (url-copy-file
+     (concat
+      "http://" (md-get-ip) ":" (format "%s" mermaid-docker-port)
+      "/img/"
+      (base64-encode-string "graph LR;A-->B&C&D;"))
+     out-file t)
+
+    (when (string-equal "" out-file)
+      (get-buffer-create out-buff)
+      (save-excursion
+        (switch-to-buffer out-buff)
+        (insert-image (create-image out-file)))
+      (delete-file out-file))))
+
 (defun mermaid-docker-install ()
   "Install everything for mermaid-docker"
   (interactive)
@@ -375,7 +412,8 @@
   (md-test-graph-rendering)
   (md-create-image-for-offline-mode)
   (md-start-offline-mode)
-  (message "md-test-graph-rendering-via-offline-mode")
+  (sleep-for 2)
+  (md-test-graph-rendering-via-offline-mode)
   (message "md-test-graph-rendering-via-external-editor"))
 
 (defun mermaid-docker-render-external (filename))
