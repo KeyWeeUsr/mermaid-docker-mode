@@ -73,6 +73,12 @@
         (switch-to-buffer (get-buffer-create buff-name))
         (insert "'docker' not found\n")))
 
+    (when (eq (executable-find "curl") nil)
+      (setq failed t)
+      (save-excursion
+        (switch-to-buffer (get-buffer-create buff-name))
+        (insert "'curl' not found\n")))
+
     ;; permissions, network, etc
     (when (not (eq 0 (call-process
                       "docker" nil
@@ -83,6 +89,7 @@
       (progn
         (switch-to-buffer (get-buffer-create buff-name))
         (setq failed t)))
+
     (when (not (eq 0 (call-process-region
                       "FROM scratch"
                       nil
