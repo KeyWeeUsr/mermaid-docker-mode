@@ -80,15 +80,15 @@
         (insert (format "'%s' not found\n" cmd)))
       t))
 
-(defun md-call-cmd (buff-name cmd-list &rest input)
+(defun md-call-cmd (buff-name cmd-list &optional input)
   (inline)
   (when (or (eq input nil) (eq input t)) (setq input ""))
-  (let ((args '()))
-    (dolist (item (list nil (pop cmd-list)
-                        nil (get-buffer-create buff-name) nil))
-      (push item args))
-    (dolist (item cmd-list) (push item args))
-    (when (not (eq 0 (apply #'call-process-region (nreverse args)))) t)))
+  (let ((args (list)))
+    (dolist (item (list input nil (pop cmd-list) nil
+                        (get-buffer-create buff-name) nil))
+      (if (eq args nil) (setq args (list item)) (push item args)))
+    (dolist (arg cmd-list) (push arg args))
+    (when (not (eq 0 (apply #'call-process-region (reverse args)))) t)))
 
 (defun md-check-deps ()
   (inline)
@@ -106,13 +106,15 @@
     ;; permissions, network, etc
     (dolist
         (item (list
-               '(nil "docker" "run" "--rm" "hello-world:latest")
-               '("FROM scratch" "docker" "build" "-")
-               '(nil "docker" "network" "create" "--internal" net-name)
-               '(nil "docker" "run" "--rm" (format "--network=%s" net-name)
+               (list nil "docker" "run" "--rm" "hello-world:latest")
+               (list "FROM scratch" "docker" "build" "-")
+               (list nil "docker" "network" "create" "--internal" net-name)
+               (list nil "docker" "run" "--rm" (format "--network=%s" net-name)
                      "hello-world:latest")
-               '(nil "docker" "network" "rm" net-name)))
-      (when (md-call-cmd buff-name item (pop item)) (setq failed t)))
+               (list nil "docker" "network" "rm" net-name)))
+      (let ((tmp nil))
+        (setq tmp (pop item))
+        (when (md-call-cmd buff-name item tmp) (setq failed t))))
 
     (if (eq failed t)
         (progn
@@ -140,8 +142,8 @@
         (message "Skipping, already cloned")
       (if (md-call-cmd
            (get-buffer-create buff-name)
-           '("git" "clone" "--quiet" "--depth" "1"
-             mermaid-docker-git-repo name))
+           (list "git" "clone" "--quiet" "--depth" "1"
+                 mermaid-docker-git-repo name))
           (switch-to-buffer buff-name)
         (kill-buffer buff-name)))))
 
@@ -158,8 +160,8 @@
 
     (if (md-call-cmd
            (get-buffer-create buff-name)
-           '("docker" "build" "--tag"
-             (concat mermaid-docker-image-name "-tmp") name))
+           (list "docker" "build" "--tag"
+                 (concat mermaid-docker-image-name "-tmp") name))
         (progn
           (switch-to-buffer (get-buffer-create buff-name))
           (user-error "Failed to build image"))
@@ -180,18 +182,18 @@
                       "rm" "--force" cont-name)
         (if (md-call-cmd
              (get-buffer-create buff-name)
-             '("docker" "run" "--name" cont-name "--detach"
-               ;; Failed to move to new namespace: PID namespaces
-               ;; supported, Network namespace supported, but failed:
-               ;; errno = Operation not permitted
-               ;;
-               ;; Error: Failed to launch the browser process!
-               "--cap-add=SYS_ADMIN"
-               "--env" (format "NODE_OPTIONS=\"--max-http-header-size=%s\""
-                               mermaid-docker-header-size)
-               "--publish" (format "127.0.0.1:%s:%s"
-                                   mermaid-docker-port mermaid-docker-port)
-               (concat mermaid-docker-image-name "-tmp")))
+             (list "docker" "run" "--name" cont-name "--detach"
+                   ;; Failed to move to new namespace: PID namespaces
+                   ;; supported, Network namespace supported, but failed:
+                   ;; errno = Operation not permitted
+                   ;;
+                   ;; Error: Failed to launch the browser process!
+                   "--cap-add=SYS_ADMIN"
+                   "--env" (format "NODE_OPTIONS=\"--max-http-header-size=%s\""
+                                   mermaid-docker-header-size)
+                   "--publish" (format "127.0.0.1:%s:%s"
+                                       mermaid-docker-port mermaid-docker-port)
+                   (concat mermaid-docker-image-name "-tmp")))
             (progn
               (switch-to-buffer (get-buffer-create buff-name))
               (user-error "Failed to run init container"))
@@ -212,14 +214,14 @@
     (when t ;; if final image is not built
       (when (md-call-cmd
              (get-buffer-create buff-name)
-             '("curl" "--silent"
-               (format "http://127.0.0.1:%s/img/%s"
-                       mermaid-docker-port
-                       (base64-encode-string "graph LR;A-->B&C&D;"))))
+             (list "curl" "--silent"
+                   (format "http://127.0.0.1:%s/img/%s"
+                           mermaid-docker-port
+                           (base64-encode-string "graph LR;A-->B&C&D;"))))
         (setq failed t))
 
       (when (md-call-cmd (get-buffer-create buff-name)
-                         '("docker" "stop" cont-name))
+                         (list "docker" "stop" cont-name))
         (setq failed t)))
 
     (if (eq failed t)
@@ -243,11 +245,11 @@
     (when t ;; if final image is not built
       (when (md-call-cmd
              (get-buffer-create buff-name)
-             '("docker" "commit" cont-name
-               mermaid-docker-image-name))
+             (list "docker" "commit" cont-name
+                   mermaid-docker-image-name))
           (setq failed t))
       (md-call-cmd (get-buffer-create buff-name)
-                   '("docker" "rm" "--force" cont-name))
+                   (list "docker" "rm" "--force" cont-name))
       (if (eq failed t)
           (progn
             (switch-to-buffer (get-buffer-create buff-name))
@@ -269,31 +271,31 @@
 
     (when t ;; if mermaid not active
       (md-call-cmd (get-buffer-create buff-name)
-                   '("docker" "rm" "--force" cont-name))
+                   (list "docker" "rm" "--force" cont-name))
       (md-call-cmd (get-buffer-create buff-name)
-                   '("docker" "network" "rm" net-name))
+                   (list "docker" "network" "rm" net-name))
 
       (when (md-call-cmd
              (get-buffer-create buff-name)
-             '("docker" "network" "create" "--internal"
-               "--driver=bridge" mermaid-docker-net))
+             (list "docker" "network" "create" "--internal"
+                   "--driver=bridge" mermaid-docker-net))
         (setq failed t))
 
       (when (md-call-cmd
              (get-buffer-create buff-name)
-             '("docker" "run" "--name" cont-name "--detach"
-               ;; Failed to move to new namespace: PID namespaces
-               ;; supported, Network namespace supported, but failed:
-               ;; errno = Operation not permitted
-               ;;
-               ;; Error: Failed to launch the browser process!
-               "--cap-add=SYS_ADMIN"
-               "--env" (format "NODE_OPTIONS=\"--max-http-header-size=%s\""
-                               mermaid-docker-header-size)
-               "--publish" (format "127.0.0.1:%s:%s"
-                                   mermaid-docker-port mermaid-docker-port)
-               (format "--network=%s" mermaid-docker-net)
-               mermaid-docker-image-name))
+             (list "docker" "run" "--name" cont-name "--detach"
+                   ;; Failed to move to new namespace: PID namespaces
+                   ;; supported, Network namespace supported, but failed:
+                   ;; errno = Operation not permitted
+                   ;;
+                   ;; Error: Failed to launch the browser process!
+                   "--cap-add=SYS_ADMIN"
+                   "--env" (format "NODE_OPTIONS=\"--max-http-header-size=%s\""
+                                   mermaid-docker-header-size)
+                   "--publish" (format "127.0.0.1:%s:%s"
+                                       mermaid-docker-port mermaid-docker-port)
+                   (format "--network=%s" mermaid-docker-net)
+                   mermaid-docker-image-name))
         (setq failed t))
 
       (if (eq failed t)
