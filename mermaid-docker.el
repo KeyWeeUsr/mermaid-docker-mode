@@ -56,7 +56,8 @@
   (inline)
   (message "Checking deps for mermaid-docker")
   (let ((buff-name "*mermaid-docker deps*")
-        (failed nil))
+        (failed nil)
+        (net-name "mermaid-dummy"))
     ;; clean first
     (kill-buffer (get-buffer-create buff-name))
 
@@ -96,6 +97,34 @@
                       "docker"
                       nil (get-buffer-create buff-name) nil
                       "build" "-")))
+      (progn
+        (switch-to-buffer (get-buffer-create buff-name))
+        (setq failed t)))
+
+    (when (not (eq 0 (call-process
+                      "docker" nil
+                      (get-buffer-create buff-name)
+                      nil
+                      "network" "create" "--internal" net-name)))
+      (progn
+        (switch-to-buffer (get-buffer-create buff-name))
+        (setq failed t)))
+
+    (when (not (eq 0 (call-process
+                      "docker" nil
+                      (get-buffer-create buff-name)
+                      nil
+                      "run" "--rm" (concat "--network=" net-name)
+                      "hello-world:latest")))
+      (progn
+        (switch-to-buffer (get-buffer-create buff-name))
+        (setq failed t)))
+
+    (when (not (eq 0 (call-process
+                      "docker" nil
+                      (get-buffer-create buff-name)
+                      nil
+                      "network" "rm" net-name)))
       (progn
         (switch-to-buffer (get-buffer-create buff-name))
         (setq failed t)))
