@@ -76,7 +76,7 @@
 
 (defconst mermaid-docker-purge-on-exit
   t
-  "Purge all running containers on Emacs exit")
+  "Purge all running containers on Emacs exit.")
 
 (defconst mermaid-docker-http-attempts
   30
@@ -225,7 +225,7 @@ Argument CMD-LIST list of strings as a command+args to execute."
           (kill-buffer (get-buffer-create buff-name)))))))
 
 (defun mermaid-docker-http-request (url &optional output)
-  "Send HTTP request to DEST with BODY to dump rendered image to OUTPUT."
+  "Send HTTP request to URL and dump rendered image to OUTPUT."
   (inline)
   (let ((attempts mermaid-docker-http-attempts)
         (ok nil))
@@ -469,7 +469,7 @@ Argument FILENAME (temporary) filename to save the output as."
 
 (defun mermaid-docker-compile-file (filename)
   "Generic advice func to replace 'mermaid-compile-file'.
-Argument FILENAME mermaid-compile-file input arg."
+Argument FILENAME `mermaid-compile-file` input arg."
   (if mermaid-docker-external
       (mermaid-docker-render-external filename)
     (mermaid-docker-render-internal filename)))
