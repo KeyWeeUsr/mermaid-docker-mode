@@ -75,6 +75,15 @@
       (progn
         (switch-to-buffer (get-buffer-create buff-name))
         (setq failed t)))
+    (when (not (eq 0 (call-process-region
+                      "FROM scratch"
+                      nil
+                      "docker"
+                      nil (get-buffer-create buff-name) nil
+                      "build" "-")))
+      (progn
+        (switch-to-buffer (get-buffer-create buff-name))
+        (setq failed t)))
 
     (if (eq failed t)
         (progn
