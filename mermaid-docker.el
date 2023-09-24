@@ -240,23 +240,19 @@
     ;; clean first
     (kill-buffer (get-buffer-create buff-name))
 
-    ;; if final image is not built
-    (when (not (eq 0 (call-process
-                       "docker" nil
-                       (get-buffer-create buff-name)
-                       nil
-                       "commit" cont-name
-                       mermaid-docker-image-name)))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
-        (setq failed t)))
-    (call-process "docker" nil (get-buffer-create buff-name) nil
-                  "rm" "--force" cont-name)
-    (if (eq failed t)
-        (progn
-          (switch-to-buffer (get-buffer-create buff-name))
-          (user-error "Failed to create offline image"))
-      (kill-buffer (get-buffer-create buff-name)))))
+    (when t ;; if final image is not built
+      (when (md-call-cmd
+             (get-buffer-create buff-name)
+             '("docker" "commit" cont-name
+               mermaid-docker-image-name))
+          (setq failed t))
+      (md-call-cmd (get-buffer-create buff-name)
+                   '("docker" "rm" "--force" cont-name))
+      (if (eq failed t)
+          (progn
+            (switch-to-buffer (get-buffer-create buff-name))
+            (user-error "Failed to create offline image"))
+        (kill-buffer (get-buffer-create buff-name))))))
 
 (defun md-start-offline-mode ()
   (inline)
