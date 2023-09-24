@@ -55,6 +55,12 @@
         (switch-to-buffer (get-buffer-create buff-name))
         (insert "'git' not found\n")))
 
+    (when (eq (executable-find "docker") nil)
+      (setq failed t)
+      (save-excursion
+        (switch-to-buffer (get-buffer-create buff-name))
+        (insert "'docker' not found\n")))
+
     (if (eq failed t)
         (progn
           (switch-to-buffer (get-buffer-create buff-name))
