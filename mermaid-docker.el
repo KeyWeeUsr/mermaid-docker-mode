@@ -65,6 +65,17 @@
         (switch-to-buffer (get-buffer-create buff-name))
         (insert "'docker' not found\n")))
 
+    ;; permissions, network, etc
+    (when (not (eq 0 (call-process
+                      "docker" nil
+                      (get-buffer-create buff-name)
+                      nil
+                      "run" "--rm"
+                      "hello-world:latest")))
+      (progn
+        (switch-to-buffer (get-buffer-create buff-name))
+        (setq failed t)))
+
     (if (eq failed t)
         (progn
           (switch-to-buffer (get-buffer-create buff-name))
