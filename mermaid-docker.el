@@ -84,6 +84,12 @@
         (switch-to-buffer (get-buffer-create buff-name))
         (insert "'curl' not found\n")))
 
+    (when (eq (executable-find "jq") nil)
+      (setq failed t)
+      (save-excursion
+        (switch-to-buffer (get-buffer-create buff-name))
+        (insert "'jq' not found\n")))
+
     ;; permissions, network, etc
     (when (not (eq 0 (call-process
                       "docker" nil
