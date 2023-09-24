@@ -32,10 +32,31 @@
   nil
   "Use external viewer to display rendered mermaid graph")
 
+(defun md-check-deps ()
+  (inline)
+  (message "Checking deps for mermaid-docker")
+  (let ((buff-name "*mermaid-docker deps*")
+        (failed nil))
+    ;; clean first
+    (kill-buffer (get-buffer-create buff-name))
+
+    ;; binaries
+    (when (eq (executable-find "git") nil)
+      (setq failed t)
+      (save-excursion
+        (switch-to-buffer (get-buffer-create buff-name))
+        (insert "'git' not found\n")))
+
+    (if (eq failed t)
+        (progn
+          (switch-to-buffer (get-buffer-create buff-name))
+          (user-error "Some deps are missing"))
+      (kill-buffer (get-buffer-create buff-name)))))
+
 (defun mermaid-docker-install ()
   "Install everything for mermaid-docker"
   (interactive)
-  (message "md-check-deps")
+  (md-check-deps)
   (message "md-create-temp-work-folder")
   (message "md-clone-mermaid-ink")
   (message "md-build-docker-image")
