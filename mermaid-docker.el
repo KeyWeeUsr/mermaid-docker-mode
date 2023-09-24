@@ -80,6 +80,16 @@
         (insert (format "'%s' not found\n" cmd)))
       t))
 
+(defun md-call-cmd (buff-name cmd-list &rest input)
+  (inline)
+  (when (or (eq input nil) (eq input t)) (setq input ""))
+  (let ((args '()))
+    (dolist (item (list nil (pop cmd-list)
+                        nil (get-buffer-create buff-name) nil))
+      (push item args))
+    (dolist (item cmd-list) (push item args))
+    (when (not (eq 0 (apply #'call-process-region (nreverse args)))) t)))
+
 (defun md-check-deps ()
   (inline)
   (message "Checking deps for mermaid-docker")
@@ -94,53 +104,15 @@
       (when (md-check-bin buff-name item) (setq failed t)))
 
     ;; permissions, network, etc
-    (when (not (eq 0 (call-process
-                      "docker" nil
-                      (get-buffer-create buff-name)
-                      nil
-                      "run" "--rm"
-                      "hello-world:latest")))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
-        (setq failed t)))
-
-    (when (not (eq 0 (call-process-region
-                      "FROM scratch"
-                      nil
-                      "docker"
-                      nil (get-buffer-create buff-name) nil
-                      "build" "-")))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
-        (setq failed t)))
-
-    (when (not (eq 0 (call-process
-                      "docker" nil
-                      (get-buffer-create buff-name)
-                      nil
-                      "network" "create" "--internal" net-name)))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
-        (setq failed t)))
-
-    (when (not (eq 0 (call-process
-                      "docker" nil
-                      (get-buffer-create buff-name)
-                      nil
-                      "run" "--rm" (concat "--network=" net-name)
-                      "hello-world:latest")))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
-        (setq failed t)))
-
-    (when (not (eq 0 (call-process
-                      "docker" nil
-                      (get-buffer-create buff-name)
-                      nil
-                      "network" "rm" net-name)))
-      (progn
-        (switch-to-buffer (get-buffer-create buff-name))
-        (setq failed t)))
+    (dolist
+        (item (list
+               '(nil "docker" "run" "--rm" "hello-world:latest")
+               '("FROM scratch" "docker" "build" "-")
+               '(nil "docker" "network" "create" "--internal" net-name)
+               '(nil "docker" "run" "--rm" (format "--network=%s" net-name)
+                     "hello-world:latest")
+               '(nil "docker" "network" "rm" net-name)))
+      (when (md-call-cmd buff-name item (pop item)) (setq failed t)))
 
     (if (eq failed t)
         (progn
