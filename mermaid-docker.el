@@ -72,6 +72,14 @@
   nil
   "Use external viewer to display rendered mermaid graph")
 
+(defun md-check-bin (buff-name cmd)
+  (inline)
+  (when (eq (executable-find "git") nil)
+      (save-excursion
+        (switch-to-buffer (get-buffer-create buff-name))
+        (insert (format "'%s' not found\n" cmd)))
+      t))
+
 (defun md-check-deps ()
   (inline)
   (message "Checking deps for mermaid-docker")
@@ -82,36 +90,8 @@
     (kill-buffer (get-buffer-create buff-name))
 
     ;; binaries
-    (when (eq (executable-find "git") nil)
-      (setq failed t)
-      (save-excursion
-        (switch-to-buffer (get-buffer-create buff-name))
-        (insert "'git' not found\n")))
-
-    (when (eq (executable-find "docker") nil)
-      (setq failed t)
-      (save-excursion
-        (switch-to-buffer (get-buffer-create buff-name))
-        (insert "'docker' not found\n")))
-
-    (when (eq (executable-find "curl") nil)
-      (setq failed t)
-      (save-excursion
-        (switch-to-buffer (get-buffer-create buff-name))
-        (insert "'curl' not found\n")))
-
-    (when (eq (executable-find "jq") nil)
-      (setq failed t)
-      (save-excursion
-        (switch-to-buffer (get-buffer-create buff-name))
-        (insert "'jq' not found\n")))
-
-    (when mermaid-docker-focus-steal-fix
-      (when (eq (executable-find "wmctrl") nil)
-        (setq failed t)
-        (save-excursion
-          (switch-to-buffer (get-buffer-create buff-name))
-          (insert "'wmctrl' not found\n"))))
+    (dolist (item '("git" "docker" "curl" "jq" "wmctrl"))
+      (when (md-check-bin buff-name item) (setq failed t)))
 
     ;; permissions, network, etc
     (when (not (eq 0 (call-process
