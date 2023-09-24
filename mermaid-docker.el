@@ -56,6 +56,10 @@
   ""
   "Default file output ('' / empty string)")
 
+(defconst mermaid-docker-external-viewer-bin
+  "/usr/bin/xviewer"
+  "Path to external image viewer")
+
 (defconst mermaid-docker-external
   nil
   "Use external viewer to display rendered mermaid graph")
@@ -400,6 +404,23 @@
         (insert-image (create-image out-file)))
       (delete-file out-file))))
 
+(defun md-test-graph-rendering-via-external-editor ()
+  (inline)
+  (message "Test graph rendering via external editor")
+  (let ((out-file (when (string-equal "" mermaid-docker-output)
+                    "/tmp/mermaid.jpg"))
+        (out-buff "*mermaid-docker output*"))
+    (url-copy-file
+     (concat
+      "http://" (md-get-ip) ":" (format "%s" mermaid-docker-port)
+      "/img/"
+      (base64-encode-string "graph LR;A-->B&C&D;"))
+     out-file t)
+    (start-process
+     "mermaid-docker-ext" nil
+     mermaid-docker-external-viewer-bin
+     out-file)))
+
 (defun mermaid-docker-install ()
   "Install everything for mermaid-docker"
   (interactive)
@@ -413,8 +434,10 @@
   (md-create-image-for-offline-mode)
   (md-start-offline-mode)
   (sleep-for 2)
-  (md-test-graph-rendering-via-offline-mode)
-  (message "md-test-graph-rendering-via-external-editor"))
+  (when (eq nil (md-test-graph-rendering-via-offline-mode))
+    (progn
+      (message "Failed to display in Emacs, trying external program")
+      (md-test-graph-rendering-via-external-editor))))
 
 (defun mermaid-docker-render-external (filename))
 
