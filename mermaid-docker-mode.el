@@ -1,4 +1,4 @@
-;;; mermaid-docker.el --- Render mermaid graphs with Docker service -*- lexical-binding: t; -*-
+;;; mermaid-docker-mode.el --- Render mermaid graphs with Docker service -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023 Peter Badida
 
