@@ -125,7 +125,7 @@ Argument CMD-LIST list of strings as a command+args to execute."
     (dolist
         (item (list
                (list nil "docker" "run" "--rm" "hello-world:latest")
-               (list "FROM scratch" "docker" "build" "-")
+               (list "FROM scratch\nENV x=1" "docker" "build" "-")
                (list nil "docker" "network" "create" "--internal" net-name)
                (list nil "docker" "run" "--rm" (format "--network=%s" net-name)
                      "hello-world:latest")
