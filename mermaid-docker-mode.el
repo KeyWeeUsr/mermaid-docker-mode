@@ -175,6 +175,10 @@ Argument CMD-LIST list of strings as a command+args to execute."
     ;; clean first
     (kill-buffer (get-buffer-create buff-name))
 
+    ;; patch upstream issue
+    (let ((dockerignore (concat name "/.dockerignore")))
+      (when (file-exists-p dockerignore)
+        (delete-file dockerignore)))
     (if (mermaid-docker-call-cmd
            (get-buffer-create buff-name)
            (list "docker" "build" "--tag"
