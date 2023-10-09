@@ -338,7 +338,7 @@ Argument CMD-LIST list of strings as a command+args to execute."
                  mermaid-docker-image-name
                  (format ".[].NetworkSettings.Networks.%s.IPAddress"
                          mermaid-docker-net))))
-    (string-replace "\n" "" (shell-command-to-string cmd))))
+    (replace-regexp-in-string "\n" "" (shell-command-to-string cmd))))
 
 (defsubst mermaid-docker-get-url (body)
   "Assemble URL for rendering Mermaid graph.
