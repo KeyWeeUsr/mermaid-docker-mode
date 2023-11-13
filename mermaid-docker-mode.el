@@ -100,11 +100,11 @@ Argument CMD name of the checked binary."
   "Call a command with optional INPUT piping and write result back.
 Argument BUFF-NAME destination to write output to.
 Argument CMD-LIST list of strings as a command+args to execute."
-  (when (or (eq input nil) (eq input t)) (setq input ""))
+  (when (or (null input) (eq input t)) (setq input ""))
   (let ((args (list)))
     (dolist (item (list input nil (pop cmd-list) nil
                         (get-buffer-create buff-name) nil))
-      (if (eq args nil) (setq args (list item)) (push item args)))
+      (if (null args) (setq args (list item)) (push item args)))
     (dolist (arg cmd-list) (push arg args))
     (unless (eq 0 (apply #'call-process-region (reverse args))) t)))
 
@@ -228,15 +228,15 @@ Argument CMD-LIST list of strings as a command+args to execute."
       (condition-case
           err
           (progn
-            (if (eq output nil)
+            (if (null output)
                 (url-retrieve-synchronously url)
               (url-copy-file url output t))
             (setq ok t))
         (error
-         (message (format "Ignoring: %s" err))
+         (message "Ignoring: %s" err)
          (sleep-for mermaid-docker-http-wait-ms))))
     (unless ok
-      (error (format "Failed request: %s" url)))))
+      (error "Failed request: %s" url))))
 
 (defun mermaid-docker--test-graph-rendering ()
   "Test graph rendering."
@@ -370,7 +370,7 @@ Argument BODY raw string of a Mermaid graph."
   "Test graph rendering via external editor."
   (message "Test graph rendering via external editor")
   (let ((out-file (when (string-equal "" mermaid-docker-output)
-                    "/tmp/mermaid.jpg")))
+                    (format "%s/mermaid.jpg" (temporary-file-directory)))))
 
     (mermaid-docker--http-request (mermaid-docker-get-url "graph LR;A-->B&C&D;")
                                  out-file)
@@ -394,7 +394,7 @@ Argument BODY raw string of a Mermaid graph."
   (mermaid-docker--test-graph-rendering)
   (mermaid-docker--create-image-for-offline-mode)
   (mermaid-docker-start-offline-mode)
-  (when (eq nil (mermaid-docker--test-graph-rendering-via-offline-mode))
+  (when (null (mermaid-docker--test-graph-rendering-via-offline-mode))
     (progn
       (message "Failed to display in Emacs, trying external program")
       (mermaid-docker--test-graph-rendering-via-external-editor)))
@@ -404,7 +404,7 @@ Argument BODY raw string of a Mermaid graph."
   "Render a Mermaid graph via external program.
 Argument FILENAME filename to save the output as."
   (let ((out-file (when (string-equal "" mermaid-docker-output)
-                    "/tmp/mermaid.jpg")))
+                    (format "%s/mermaid.jpg" (temporary-file-directory)))))
 
     (mermaid-docker--http-request
      (mermaid-docker-get-url (with-temp-buffer
@@ -442,8 +442,8 @@ Argument FILENAME (temporary) filename to save the output as."
       (delete-file out-file))))
 
 (defun mermaid-docker-compile-file (filename)
-  "Generic advice func to replace 'mermaid-compile-file'.
-Argument FILENAME `mermaid-compile-file` input arg."
+  "Generic advice func to replace =mermaid-compile-file=.
+Argument FILENAME =mermaid-compile-file= input arg."
   (if mermaid-docker-external
       (mermaid-docker--render-external filename)
     (mermaid-docker--render-internal filename)))
