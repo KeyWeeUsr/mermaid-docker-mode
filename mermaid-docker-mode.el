@@ -32,62 +32,106 @@
 
 (require 'mermaid-mode)
 
-(defconst mermaid-docker-tmp-folder
+(defgroup mermaid-docker
+  nil
+  "Customization group for `mermaid-docker-mode'."
+  :group 'convenience
+  :group 'external
+  :group 'extensions
+  :group 'x)
+
+;; customization values
+(defcustom mermaid-docker-always-check-deps
+  t
+  "Always look up binaries, libraries and other required tools."
+  :group 'mermaid-docker
+  :type 'boolean)
+
+(defcustom mermaid-docker-tmp-folder
   "mermaid-docker"
-  "Name for /tmp/<folder>.")
+  "Name for /tmp/<folder>."
+  :group 'mermaid-docker
+  :type 'string)
 
-(defconst mermaid-docker-git-repo
+(defcustom mermaid-docker-git-repo
   "https://github.com/jihchi/mermaid.ink"
-  "Address for the mermaid.ink repo.")
+  "Address for the mermaid.ink repo."
+  :group 'mermaid-docker
+  :type 'string)
 
-(defconst mermaid-docker-image-name
+(defcustom mermaid-docker-image-name
   "md-ink-offline"
-  "Name for mermaid-docker image.")
+  "Name for mermaid-docker image."
+  :group 'mermaid-docker
+  :type 'string)
 
-(defconst mermaid-docker-header-size
+(defcustom mermaid-docker-header-size
   102400000
-  "Node.js option --max-http-header-size.")
+  "Node.js option --max-http-header-size."
+  :group 'mermaid-docker
+  :type 'number)
 
-(defconst mermaid-docker-port
+(defcustom mermaid-docker-port
   3000
-  "Port mermaid-ink service listens on.")
+  "Port mermaid-ink service listens on."
+  :group 'mermaid-docker
+  :type 'number)
 
-(defconst mermaid-docker-net
+(defcustom mermaid-docker-net
   "mermaid_no_internet"
-  "Network name to use.")
+  "Network name to use."
+  :group 'mermaid-docker
+  :type 'string)
 
-(defconst mermaid-docker-output
+(defcustom mermaid-docker-output
   ""
-  "Default file output ('' / empty string).")
+  "Default file output ('' / empty string)."
+  :group 'mermaid-docker
+  :type 'string)
 
-(defconst mermaid-docker-external-viewer-bin
+(defcustom mermaid-docker-external-viewer-bin
   "/usr/bin/xviewer"
-  "Path to external image viewer.")
+  "Path to external image viewer."
+  :group 'mermaid-docker
+  :type 'string)
 
-(defconst mermaid-docker-focus-steal-fix
+(defcustom mermaid-docker-focus-steal-fix
   t
-  "Should attempt to fix focus stealing?")
+  "Should attempt to fix focus stealing?"
+  :group 'mermaid-docker
+  :type 'boolean)
 
-(defconst mermaid-docker-focus-steal-ms
+(defcustom mermaid-docker-focus-steal-ms
   200
-  "Milliseconds to wait before stealing focus back.")
+  "Milliseconds to wait before stealing focus back."
+  :group 'mermaid-docker
+  :type 'number)
 
-(defconst mermaid-docker-external
+(defcustom mermaid-docker-external
   t
-  "Use external viewer to display rendered mermaid graph.")
+  "Use external viewer to display rendered mermaid graph."
+  :group 'mermaid-docker
+  :type 'boolean)
 
-(defconst mermaid-docker-purge-on-exit
+(defcustom mermaid-docker-purge-on-exit
   t
-  "Purge all running containers on Emacs exit.")
+  "Purge all running containers on Emacs exit."
+  :group 'mermaid-docker
+  :type 'boolean)
 
-(defconst mermaid-docker-http-attempts
+(defcustom mermaid-docker-http-attempts
   30
-  "Default number of attempts to try contacting the container.")
+  "Default number of attempts to try contacting the container."
+  :group 'mermaid-docker
+  :type 'number)
 
-(defconst mermaid-docker-http-wait-ms
+(defcustom mermaid-docker-http-wait-ms
   0.2
-  "Default time to wait between HTTP requests to the container.")
+  "Default time to wait between HTTP requests to the container."
+  :group 'mermaid-docker
+  :type 'number)
 
+;; private/helper funcs
 (defun mermaid-docker--check-bin (buff-name cmd)
   "Check if a binary is present on the system.
 Argument BUFF-NAME destination to write failure to.
