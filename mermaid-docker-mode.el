@@ -5,7 +5,7 @@
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: convenience, docker, mermaid, mmd, graph, design, jpg, image, api
 ;; Version: 1.1.0
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "26.1") (mermaid-mode "1.0"))
 ;; Homepage: https://github.com/KeyWeeUsr/mermaid-docker-mode
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,8 @@
 ;; isolated from random Node.js deps/files noise all around the filesystem.
 
 ;;; Code:
+
+(require 'mermaid-mode)
 
 (defconst mermaid-docker-tmp-folder
   "mermaid-docker"
@@ -461,7 +463,7 @@ Argument FILENAME =mermaid-compile-file= input arg."
    #'mermaid-docker-compile-file))
 
 (define-minor-mode mermaid-docker-mode
-  "Minor mode to patch mermaid-mode with Docker-enabled version."
+  "Minor mode to patch `mermaid-mode' with Docker-enabled version."
   :lighter " mermaid-docker"
   (if mermaid-docker-mode
       (mermaid-docker-mode--activate)
