@@ -432,7 +432,8 @@ Argument BODY raw string of a Mermaid graph."
 (defun mermaid-docker-install ()
   "Install everything for mermaid-docker."
   (interactive)
-  (mermaid-docker--check-deps)
+  (when mermaid-docker-always-check-deps
+    (mermaid-docker--check-deps))
   (mermaid-docker--create-temp-work-folder)
   (mermaid-docker--clone-mermaid-ink)
   (mermaid-docker--build-docker-image)
