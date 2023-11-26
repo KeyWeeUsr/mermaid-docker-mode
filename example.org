@@ -1,0 +1,8 @@
+#+name: chart
+#+begin_src mermaid-docker :file /tmp/example.jpg
+flowchart TD
+    A[Crossroads] --> |Stop| B(Check navigation)
+    B --> C{Let me think}
+    C --> |Left| D[Road]
+    C --> |Right| E[Highway]
+#+end_src
