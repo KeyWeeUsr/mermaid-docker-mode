@@ -146,11 +146,11 @@
   "Check if a binary is present on the system.
 Argument BUFF-NAME destination to write failure to.
 Argument CMD name of the checked binary."
-  (when (eq (executable-find cmd) nil)
-      (save-window-excursion
-        (switch-to-buffer (get-buffer-create buff-name))
-        (insert (format "'%s' not found\n" cmd)))
-      t))
+  (unless (executable-find cmd)
+    (save-window-excursion
+      (switch-to-buffer (get-buffer-create buff-name))
+      (insert (format "'%s' not found\n" cmd)))
+    t))
 
 (defun mermaid-docker--call-cmd (buff-name cmd-list &optional input)
   "Call a command with optional INPUT piping and write result back.
@@ -191,11 +191,10 @@ Argument CMD-LIST list of strings as a command+args to execute."
         (setq tmp (pop item))
         (when (mermaid-docker--call-cmd buff-name item tmp) (setq failed t))))
 
-    (if (eq failed t)
-        (progn
-          (switch-to-buffer (get-buffer-create buff-name))
-          (user-error "Some deps are missing"))
-      (kill-buffer (get-buffer-create buff-name)))))
+    (if (not failed)
+        (kill-buffer (get-buffer-create buff-name))
+      (switch-to-buffer (get-buffer-create buff-name))
+      (user-error "Some deps are missing"))))
 
 (defun mermaid-docker--create-temp-work-folder ()
   "Create temporary work folder."
@@ -240,14 +239,13 @@ Argument CMD-LIST list of strings as a command+args to execute."
     (let ((dockerignore (concat name "/.dockerignore")))
       (when (file-exists-p dockerignore)
         (delete-file dockerignore)))
-    (if (mermaid-docker--call-cmd
+    (if (not (mermaid-docker--call-cmd
            (get-buffer-create buff-name)
            (list "docker" "build" "--tag"
-                 (concat mermaid-docker-image-name "-tmp") name))
-        (progn
-          (switch-to-buffer (get-buffer-create buff-name))
-          (user-error "Failed to build image"))
-      (kill-buffer (get-buffer-create buff-name)))))
+                 (concat mermaid-docker-image-name "-tmp") name)))
+        (kill-buffer (get-buffer-create buff-name))
+      (switch-to-buffer (get-buffer-create buff-name))
+      (user-error "Failed to build image"))))
 
 (defun mermaid-docker--initial-container-run ()
   "Run initial container to download deps and check rendering."
@@ -263,7 +261,7 @@ Argument CMD-LIST list of strings as a command+args to execute."
       (when t ;; if tmp-mermaid not active
         (call-process "docker" nil (get-buffer-create buff-name) nil
                       "rm" "--force" cont-name)
-        (if (mermaid-docker--call-cmd
+        (if (not (mermaid-docker--call-cmd
              (get-buffer-create buff-name)
              (list "docker" "run" "--name" cont-name "--detach"
                    ;; Failed to move to new namespace: PID namespaces
@@ -276,11 +274,10 @@ Argument CMD-LIST list of strings as a command+args to execute."
                                    mermaid-docker-header-size)
                    "--publish" (format "127.0.0.1:%s:%s"
                                        mermaid-docker-port mermaid-docker-port)
-                   (concat mermaid-docker-image-name "-tmp")))
-            (progn
-              (switch-to-buffer (get-buffer-create buff-name))
-              (user-error "Failed to run init container"))
-          (kill-buffer (get-buffer-create buff-name)))))))
+                   (concat mermaid-docker-image-name "-tmp"))))
+            (kill-buffer (get-buffer-create buff-name))
+          (switch-to-buffer (get-buffer-create buff-name))
+          (user-error "Failed to run init container"))))))
 
 (defun mermaid-docker--http-request (url &optional output)
   "Send HTTP request to URL and dump rendered image to OUTPUT."
@@ -322,11 +319,10 @@ Argument CMD-LIST list of strings as a command+args to execute."
                          (list "docker" "stop" cont-name))
         (setq failed t)))
 
-    (if (eq failed t)
-        (progn
-          (switch-to-buffer (get-buffer-create buff-name))
-          (user-error "Failed to test graph rendering"))
-      (kill-buffer (get-buffer-create buff-name)))))
+    (if (not failed)
+        (kill-buffer (get-buffer-create buff-name))
+      (switch-to-buffer (get-buffer-create buff-name))
+      (user-error "Failed to test graph rendering"))))
 
 (defun mermaid-docker--create-image-for-offline-mode ()
   "Create new Docker image from initial container for offline running."
@@ -346,11 +342,10 @@ Argument CMD-LIST list of strings as a command+args to execute."
           (setq failed t))
       (mermaid-docker--call-cmd (get-buffer-create buff-name)
                    (list "docker" "rm" "--force" cont-name))
-      (if (eq failed t)
-          (progn
-            (switch-to-buffer (get-buffer-create buff-name))
-            (user-error "Failed to create offline image"))
-        (kill-buffer (get-buffer-create buff-name))))))
+      (if (not failed)
+          (kill-buffer (get-buffer-create buff-name))
+        (switch-to-buffer (get-buffer-create buff-name))
+        (user-error "Failed to create offline image")))))
 
 (defun mermaid-docker-start-offline-mode ()
   "Start a Docker container with separate network and no Internet access."
@@ -392,11 +387,10 @@ Argument CMD-LIST list of strings as a command+args to execute."
                    mermaid-docker-image-name))
         (setq failed t))
 
-      (if (eq failed t)
-          (progn
-            (switch-to-buffer (get-buffer-create buff-name))
-            (user-error "Failed to start offline mode"))
-        (kill-buffer (get-buffer-create buff-name))))))
+      (if (not failed)
+          (kill-buffer (get-buffer-create buff-name))
+        (switch-to-buffer (get-buffer-create buff-name))
+        (user-error "Failed to start offline mode")))))
 
 (defun mermaid-docker-get-ip ()
   "Get current IP of a running mermaid-docker container."
@@ -464,11 +458,10 @@ Argument BODY raw string of a Mermaid graph."
   (mermaid-docker--test-graph-rendering)
   (mermaid-docker--create-image-for-offline-mode)
   (mermaid-docker-start-offline-mode)
-  (when (null (mermaid-docker--test-graph-rendering-via-offline-mode))
-    (progn
-      (when mermaid-docker-verbose
-        (mermaid-docker--log "Failed to display in Emacs, trying external program"))
-      (mermaid-docker--test-graph-rendering-via-external-editor)))
+  (unless (mermaid-docker--test-graph-rendering-via-offline-mode)
+    (when mermaid-docker-verbose
+      (mermaid-docker--log "Failed to display in Emacs, trying external program"))
+    (mermaid-docker--test-graph-rendering-via-external-editor))
   (when mermaid-docker-verbose
     (mermaid-docker--log "Successfully installed")))
 
