@@ -406,6 +406,7 @@ Argument CMD-LIST list of strings as a command+args to execute."
 (defsubst mermaid-docker-get-url (body)
   "Assemble URL for rendering Mermaid graph.
 Argument BODY raw string of a Mermaid graph."
+  ;; TODO: support mermaid-mode's background width height theme
   (format "http://%s:%s/img/%s"
           (mermaid-docker-get-ip)
           mermaid-docker-port
@@ -526,6 +527,28 @@ Argument FILENAME =mermaid-compile-file= input arg."
   (advice-remove
    'mermaid-compile-file
    #'mermaid-docker-compile-file))
+
+;; public funcs
+(defvar org-babel-default-header-args:mermaid-docker
+  '((:file "file") (:exports . "results"))
+  "Default arguments for evaluating a mermaid source block.")
+
+(defun org-babel-execute:mermaid-docker (body params)
+  "Execute command with BODY and PARAMS from src block."
+  (let* ((out-file
+          (or (cdr (assoc :file params))
+              (error "Mermaid-docker requires a \":file\" header argument")))
+         ;; TODO:
+         ;; * mermaid syntax highlighting with mermaid-docker as dest
+         ;; * insert to buffer as file
+         ;; * (width (cdr (assoc :width params)))
+         ;; * (height (cdr (assoc :height params)))
+         ;; * (theme (cdr (assoc :theme params)))
+         ;; * (background-color (cdr (assoc :background-color params)))
+         )
+    (mermaid-docker--http-request
+     (mermaid-docker-get-url body) out-file)
+    (format "file:%s" out-file)))
 
 (define-minor-mode mermaid-docker-mode
   "Minor mode to patch `mermaid-mode' with Docker-enabled version."
