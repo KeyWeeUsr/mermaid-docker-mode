@@ -139,7 +139,9 @@
 
 ;; private/helper funcs
 (defun mermaid-docker--log (format-string &rest args)
-  "Logging func for `mermaid-docker-mode'."
+  "Logging func for symbol `mermaid-docker-mode'.
+Argument FORMAT-STRING passed to `message' func as the first arg.
+Optional argument ARGS passed to `message' func as the second arg."
   (message (format "mermaid-docker: %s" format-string) args))
 
 (defun mermaid-docker--check-bin (buff-name cmd)
