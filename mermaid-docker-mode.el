@@ -4,7 +4,7 @@
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: convenience, docker, mermaid, mmd, graph, design, jpg, image, api
-;; Version: 1.1.1
+;; Version: 1.2.0
 ;; Package-Requires: ((emacs "26.1") (mermaid-mode "1.0"))
 ;; Homepage: https://github.com/KeyWeeUsr/mermaid-docker-mode
 
