@@ -1,3 +1,6 @@
+[![MELPA][melpa-badge]][melpa-package]
+[![MELPA Stable][melpa-stable-badge]][melpa-stable-package]
+
 # mermaid-docker-mode
 
 Render mermaid graphs with Docker service
@@ -10,6 +13,9 @@ your system is kept isolated from random Node.js deps/files noise all around
 the filesystem.
 
 ## How to
+
+Install it from [Melpa](https://melpa.org/#/getting-started) or clone and
+install manually, then:
 
 1. Have [`mermaid-mode`](https://melpa.org/#/mermaid-mode) installed.
 2. Run the install function `M-x mermaid-docker-install`
@@ -24,3 +30,8 @@ By default the rendering is set to happen in an external viewer (such as
 itself via inserting an image into a new buffer.
 
 Make sure to check related `defconst` parts of the file to customize.
+
+[melpa-badge]: http://melpa.org/packages/mermaid-docker-mode-badge.svg
+[melpa-package]: http://melpa.org/#/mermaid-docker-mode
+[melpa-stable-badge]: http://stable.melpa.org/packages/mermaid-docker-mode-badge.svg
+[melpa-stable-package]: http://stable.melpa.org/#/mermaid-docker-mode
