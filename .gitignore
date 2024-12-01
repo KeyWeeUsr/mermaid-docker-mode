@@ -1,0 +1,11 @@
+*~
+*#*
+*.#*
+*#
+*.#
+*.swp
+
+# Added automatically by ‘eldev init’.
+/.eldev
+/Eldev-local
+*-autoloads.el
