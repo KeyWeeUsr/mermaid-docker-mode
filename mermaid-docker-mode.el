@@ -4,7 +4,7 @@
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: convenience, docker, mermaid, mmd, graph, design, jpg, image, api
-;; Version: 2.0.0
+;; Version: 2.0.1
 ;; Package-Requires: ((emacs "26.1") (mermaid-mode "1.0"))
 ;; Homepage: https://github.com/KeyWeeUsr/mermaid-docker-mode
 
@@ -23,10 +23,10 @@
 
 ;;; Commentary:
 
-;; This library attempts to create Mermaid graphs via mermaid-ink aka mermaid
-;; as an API via a custom locally-built Docker image with restricted network
-;; access, so that you are sure nothing gets out and your system is kept
-;; isolated from random Node.js deps/files noise all around the filesystem.
+;; This library attempts to create Mermaid graphs via the official mermaid-cli
+;; using the official Docker image and restricting network access, so that you
+;; are sure nothing gets out and your system is kept isolated from random
+;; Node.js deps/files noise all around the filesystem.
 
 ;;; Code:
 
