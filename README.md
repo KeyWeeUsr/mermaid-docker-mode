@@ -1,6 +1,8 @@
 # mermaid-docker-mode
 [![MELPA][melpa-badge]][melpa-package]
 [![MELPA Stable][melpa-stable-badge]][melpa-stable-package]
+[![CI][ci-badge]][ci-workflow]
+[![Coverage Status][cover-badge]][cover-link]
 [![Buy me a coffee][bmc-badge]][bmc-link]
 [![Liberapay][lp-badge]][lp-link]
 [![PayPal][ppl-badge]][ppl-link]
@@ -42,3 +44,7 @@ Make sure to check related `defconst` parts of the file to customize.
 [ppl-link]: https://paypal.me/peterbadida
 [lp-badge]: https://img.shields.io/badge/-liberapay-grey?logo=liberapay
 [lp-link]: https://liberapay.com/keyweeusr
+[ci-badge]: https://github.com/KeyWeeUsr/mermaid-docker-mode/actions/workflows/test.yml/badge.svg
+[ci-workflow]: https://github.com/KeyWeeUsr/mermaid-docker-mode/actions/workflows/test.yml
+[cover-badge]: https://coveralls.io/repos/github/KeyWeeUsr/mermaid-docker-mode/badge.svg?branch=master
+[cover-link]: https://coveralls.io/github/KeyWeeUsr/mermaid-docker-mode?branch=master
