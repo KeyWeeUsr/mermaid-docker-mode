@@ -1,6 +1,6 @@
 ;;; mermaid-docker-mode.el --- Render mermaid graphs with Docker service -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2023 Peter Badida
+;; Copyright (C) 2024 Peter Badida
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: convenience, docker, mermaid, mmd, graph, design, jpg, image, api
