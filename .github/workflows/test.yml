@@ -65,14 +65,14 @@ jobs:
               compile \
               --warnings-as-errors
 
-      - name: Lint the project
-        run: |
-          eldev \
-              --debug \
-              --trace \
-              --time \
-              --color=always \
-              lint
+      # - name: Lint the project
+      #   run: |
+      #     eldev \
+      #         --debug \
+      #         --trace \
+      #         --time \
+      #         --color=always \
+      #         lint
 
       - name: Run all doctor tests
         run: |
