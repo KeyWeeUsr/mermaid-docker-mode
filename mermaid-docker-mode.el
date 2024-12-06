@@ -234,7 +234,7 @@ Argument FILENAME Diagram file."
      mermaid-docker-external-viewer-bin
      out-file)
     (when mermaid-docker-focus-steal-fix
-      (sleep-for 0 mermaid-docker-focus-steal-ms)
+      (sleep-for (/ mermaid-docker-focus-steal-ms 1000))
       (start-process "fix-focus-steal" nil "wmctrl" "-a" "emacs"))))
 
 (defun mermaid-docker--render-internal (filename)
