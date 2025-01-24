@@ -101,6 +101,13 @@
   :group 'mermaid-docker
   :type 'boolean)
 
+(defcustom mermaid-docker-engine
+  "docker"
+  "Container engine."
+  :group 'mermaid-docker
+	:type '(string :options ("docker" "podman"))
+	:set 'set-default)
+
 (define-error 'mermaid-docker-error "Generic mermaid-docker-mode error")
 
 (define-error 'mermaid-docker-render-error
@@ -143,7 +150,7 @@ Argument CMD-LIST list of strings as a command+args to execute."
     (mermaid-docker--log "Checking deps for mermaid-docker"))
   (let ((buff-name "*mermaid-docker deps*")
         (failed nil)
-        (deps '("docker")))
+        (deps (list mermaid-docker-engine)))
     (unless (eq window-system 'ns)
       (push "wmctrl" deps))
     ;; clean first
@@ -156,8 +163,8 @@ Argument CMD-LIST list of strings as a command+args to execute."
     ;; permissions, network, etc
     (dolist
         (item (list
-               (list nil "docker" "run" "--rm" "hello-world:latest")
-               (list nil "docker" "run" "--rm" "--network=none"
+               (list nil mermaid-docker-engine "run" "--rm" "hello-world:latest")
+               (list nil mermaid-docker-engine "run" "--rm" "--network=none"
                      "hello-world:latest")))
       (let ((tmp nil))
         (setq tmp (pop item))
@@ -179,7 +186,7 @@ Argument CMD-LIST list of strings as a command+args to execute."
 
     (when (mermaid-docker--call-cmd
            (get-buffer-create buff-name)
-           (list "docker" "run" "--rm" "--interactive"
+           (list mermaid-docker-engine "run" "--rm" "--interactive"
                  (format "%s:%s"
                          mermaid-docker-image-name
                          mermaid-docker-image-tag)
@@ -214,7 +221,7 @@ Argument FILENAME Diagram file."
     (with-temp-file out-file
       (when (mermaid-docker--call-cmd
              (current-buffer)
-             (list "docker" "run" "--rm" "--interactive"
+             (list mermaid-docker-engine "run" "--rm" "--interactive"
                    "--network=none"
                    (format "%s:%s"
                            mermaid-docker-image-name
@@ -249,7 +256,7 @@ Argument FILENAME Diagram file."
 
     (when (mermaid-docker--call-cmd
            tmp-buff
-           (list "docker" "run" "--rm" "--interactive"
+           (list mermaid-docker-engine "run" "--rm" "--interactive"
                  "--network=none"
                  (format "%s:%s"
                          mermaid-docker-image-name
@@ -314,7 +321,7 @@ Argument FILENAME =mermaid-compile-file= input arg."
     (with-temp-file out-file
       (when (mermaid-docker--call-cmd
              (current-buffer)
-             (list "docker" "run" "--rm" "--interactive"
+             (list mermaid-docker-engine "run" "--rm" "--interactive"
                    "--network=none"
                    (format "%s:%s"
                            mermaid-docker-image-name
