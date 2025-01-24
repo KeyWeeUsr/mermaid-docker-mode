@@ -32,7 +32,7 @@ By default the rendering is set to happen in an external viewer (such as
 `xviewer`) and can be changed to any other binary or set to render within Emacs
 itself via inserting an image into a new buffer.
 
-In order yo use Podman instead of Docker as container engine, set it as follows:
+In order to use Podman instead of Docker as container engine, set it as follows:
 
 ```
 (setq-default mermaid-docker-engine "podman")
