@@ -1,10 +1,10 @@
 ;;; mermaid-docker-mode.el --- Render mermaid graphs with Docker service -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2024 Peter Badida
+;; Copyright (C) 2025 Peter Badida
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: convenience, docker, mermaid, mmd, graph, design, jpg, image, api
-;; Version: 2.0.2
+;; Version: 2.0.3
 ;; Package-Requires: ((emacs "26.1") (mermaid-mode "20230517.1527+"))
 ;; Homepage: https://github.com/KeyWeeUsr/mermaid-docker-mode
 
@@ -98,6 +98,12 @@
 (defcustom mermaid-docker-external
   nil
   "Use external viewer to display rendered mermaid graph."
+  :group 'mermaid-docker
+  :type 'boolean)
+
+(defcustom mermaid-docker-stay-in-window
+  nil
+  "Stay in window with the diagram after rendering."
   :group 'mermaid-docker
   :type 'boolean)
 
@@ -263,6 +269,8 @@ Argument FILENAME Diagram file."
 
     (save-window-excursion
       (switch-to-buffer out-buff)
+      (unless mermaid-docker-stay-in-window
+        (delete-region (point-min) (point-max)))
       (insert-image
        (create-image
         (with-current-buffer tmp-buff
@@ -271,7 +279,8 @@ Argument FILENAME Diagram file."
            'utf-8))
         nil
         t)))
-    (switch-to-buffer-other-window out-buff)))
+    (unless mermaid-docker-stay-in-window
+      (switch-to-buffer-other-window out-buff))))
 
 (defun mermaid-docker-compile-file (filename)
   "Generic advice func to replace =mermaid-compile-file=.
