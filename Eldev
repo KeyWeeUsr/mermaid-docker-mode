@@ -8,13 +8,14 @@
 (eldev-use-plugin 'autoloads)
 (eldev-use-plugin 'undercover)
 
+(defconst name "mermaid-docker-mode.el")
 (eldev-defcommand tag (tag)
   "Make a new tag"
   :parameters "TAG"
   (unless tag
     (signal 'eldev-wrong-command-usage))
-  (let ((name "mermaid-docker-mode.el")
-        (buff (get-buffer-create "*output*")))
+  (render)
+  (let ((buff (get-buffer-create "*output*")))
     (when (< 0 (call-process "git" nil buff nil "add" "-f" "."))
       (eldev-output (with-current-buffer buff (buffer-string)))
       (error "Failed to add files"))
@@ -28,3 +29,65 @@
     (when (< 0 (call-process "git" nil buff nil "tag" tag "--sign"))
       (eldev-output (with-current-buffer buff (buffer-string)))
       (error "Failed to tag and sign"))))
+
+(eldev-defcommand render ()
+  "Render customization in README.md"
+  (with-temp-file "README.md.new"
+    (insert-file-contents-literally "README.md")
+    (goto-char (point-min))
+    (search-forward "## Customization")
+    (search-forward "\n\n")
+
+    (unwind-protect
+        (progn (advice-add 'message :override (lambda (&rest _))) (push-mark))
+      (advice-remove 'message (lambda (&rest _))))
+
+    (re-search-forward "\\[.*?]: ")
+    (delete-region (mark) (line-beginning-position))
+    (goto-char (mark))
+
+    (let ((header '(:name :type :default :description))
+          (order '(:name :default :description :type))
+          widths tmp lines groups)
+      (with-temp-buffer
+        (insert-file-contents-literally name)
+        (goto-char (point-min))
+
+        (while (re-search-forward
+                (rx (literal "(") "defcustom" (+ blank) (group (+? ascii)) "\n"
+                    (+ blank) (group (+? not-newline)) "\n" (+ blank)
+                    (literal "\"") (group (+? not-newline)) (literal "\"") "\n"
+                    (+? not-newline) "\n" (+ blank) (literal ":type '")
+                    (group (+? ascii)) (literal ")"))
+                nil t)
+
+          (dotimes (idx (length order))
+            (setq tmp (plist-put tmp (nth idx order) (match-string (1+ idx)))))
+          (push tmp lines) (setq tmp nil)))
+
+      (dolist (item (reverse lines))
+        (dolist (col header)
+          (setq widths
+                (plist-put widths col (max (or (plist-get widths col) 0)
+                                           (length (plist-get item col)))))))
+
+      (dolist (col header)
+        (unless (eq :description col)
+          (setq widths (plist-put widths col (+ 2 (plist-get widths col)))))
+        (insert (string-pad (capitalize (substring (format "%s" col) 1))
+                            (plist-get widths col)))
+        (insert "|"))
+      (insert "\n")
+
+      (dolist (col header)
+        (insert (format "%s|" (string-pad "" (plist-get widths col) ?-))))
+      (insert "\n")
+
+      (dolist (item (reverse lines))
+        (dolist (col header)
+          (let ((value (plist-get item col)) (padding (plist-get widths col)))
+            (unless (eq :description col) (setq value (format "`%s`" value)))
+            (insert (format "%s|" (string-pad value padding)))))
+        (insert "\n"))
+      (insert "\n")))
+  (rename-file "README.md.new" "README.md" t))
