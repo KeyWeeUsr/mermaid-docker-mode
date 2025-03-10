@@ -28,11 +28,19 @@ install manually, then:
 
 ## Customization
 
-By default the rendering is set to happen in an external viewer (such as
-`xviewer`) and can be changed to any other binary or set to render within Emacs
-itself via inserting an image into a new buffer.
-
-Make sure to check related `defconst` parts of the file to customize.
+Name                                |Type     |Default               |Description                                                 |
+------------------------------------|---------|----------------------|------------------------------------------------------------|
+`mermaid-docker-verbose`            |`boolean`|`t`                   |Emit messages when something's happening in the background. |
+`mermaid-docker-always-check-deps`  |`boolean`|`t`                   |Always look up binaries, libraries and other required tools.|
+`mermaid-docker-image-name`         |`string` |`"minlag/mermaid-cli"`|Official mermaid-cli image.                                 |
+`mermaid-docker-image-tag`          |`string` |`"11.4.1"`            |Tag for official mermaid-cli image.                         |
+`mermaid-docker-output-format`      |`string` |`"png"`               |Output format for rendered diagram.                         |
+`mermaid-docker-output`             |`string` |`""`                  |Default file output ('' / empty string).                    |
+`mermaid-docker-external-viewer-bin`|`string` |`"/usr/bin/xviewer"`  |Path to external image viewer.                              |
+`mermaid-docker-focus-steal-fix`    |`boolean`|`t`                   |Should attempt to fix focus stealing?                       |
+`mermaid-docker-focus-steal-ms`     |`number` |`200`                 |Milliseconds to wait before stealing focus back.            |
+`mermaid-docker-external`           |`boolean`|`nil`                 |Use external viewer to display rendered mermaid graph.      |
+`mermaid-docker-stay-in-window`     |`boolean`|`nil`                 |Stay in window with the diagram after rendering.            |
 
 [melpa-badge]: http://melpa.org/packages/mermaid-docker-mode-badge.svg
 [melpa-package]: http://melpa.org/#/mermaid-docker-mode
