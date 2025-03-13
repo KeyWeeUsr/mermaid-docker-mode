@@ -269,7 +269,7 @@ Argument FILENAME Diagram file."
 
     (save-window-excursion
       (switch-to-buffer out-buff)
-      (unless mermaid-docker-stay-in-window
+      (when mermaid-docker-stay-in-window
         (delete-region (point-min) (point-max)))
       (insert-image
        (create-image
