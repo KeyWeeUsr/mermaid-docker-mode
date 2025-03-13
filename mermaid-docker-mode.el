@@ -4,7 +4,7 @@
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: convenience, docker, mermaid, mmd, graph, design, jpg, image, api
-;; Version: 2.0.3
+;; Version: 2.1.0
 ;; Package-Requires: ((emacs "26.1") (mermaid-mode "20230517.1527+"))
 ;; Homepage: https://github.com/KeyWeeUsr/mermaid-docker-mode
 
@@ -246,7 +246,8 @@ Argument FILENAME Diagram file."
 (defun mermaid-docker--render-internal (filename)
   "Render a Mermaid graph internally in Emacs.
 Argument FILENAME Diagram file."
-  (let* ((out-buff "*mermaid-docker output*")
+  (let* ((out-buff (format "*mermaid-docker output <%s>*"
+                           (file-name-nondirectory filename)))
          (tmp-buff (format "*%s*" (make-temp-name "")))
          (diagram (with-temp-buffer
                     (insert-file-contents filename)
