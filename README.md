@@ -20,7 +20,8 @@ around the filesystem.
 Install it from [Melpa](https://melpa.org/#/getting-started) or clone and
 install manually, then:
 
-1. Have [`mermaid-mode`](https://melpa.org/#/mermaid-mode) installed.
+1. Have [`mermaid-mode`](https://melpa.org/#/mermaid-mode) installed and
+   _activated_.
 2. Run the install function `M-x mermaid-docker-install`
 3. Activate this mode with `M-x mermaid-docker-mode`
 4. After successful installation `C-c C-c` for `mermaid-mode` is patched and
