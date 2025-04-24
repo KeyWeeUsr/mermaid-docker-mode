@@ -60,7 +60,7 @@
   :type 'string)
 
 (defcustom mermaid-docker-image-tag
-  "11.4.1"
+  "11.4.3-beta.30"
   "Tag for official mermaid-cli image."
   :group 'mermaid-docker
   :type 'string)
