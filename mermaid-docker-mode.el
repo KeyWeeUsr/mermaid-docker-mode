@@ -269,7 +269,10 @@ Argument FILENAME Diagram file."
 Argument FILENAME Diagram file."
   (let* ((out-buff (format "*mermaid-docker output <%s>*"
                            (file-name-nondirectory filename)))
-         (tmp-buff (format "*%s*" (make-temp-name "")))
+         (tmp-name (make-temp-name ""))
+         (tmp-buff (format "*%s*" tmp-name))
+         (stderr-buff (format "*%s-stderr*" tmp-name))
+         (stderr-file (format "/tmp/%s-stderr" tmp-name))
          (diagram (with-temp-buffer
                     (insert-file-contents filename)
                     (buffer-substring-no-properties (point-min) (point-max)))))
@@ -287,7 +290,12 @@ Argument FILENAME Diagram file."
                  "--output" "-"
                  "--outputFormat" mermaid-docker-output-format)
            diagram
-           nil)
+           stderr-file)
+      (with-current-buffer (get-buffer-create stderr-buff)
+        (when (file-exists-p stderr-file)
+          (insert-file-contents-literally stderr-file)
+          (read-only-mode)
+          (pop-to-buffer (current-buffer))))
       (signal 'mermaid-docker-render-error nil))
 
     (save-window-excursion
