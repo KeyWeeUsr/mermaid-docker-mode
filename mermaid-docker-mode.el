@@ -113,6 +113,9 @@
   :group 'mermaid-docker
   :type 'string)
 
+(defvar-local mermaid-docker-internal-scale 1
+  "Default scale for the in-buffer rendered diagram image.")
+
 (define-error 'mermaid-docker-error "Generic mermaid-docker-mode error")
 
 (define-error 'mermaid-docker-render-error
@@ -309,7 +312,8 @@ Argument FILENAME Diagram file."
            (buffer-substring-no-properties (point-min) (point-max))
            'utf-8))
         nil
-        t)))
+        t
+        :scale mermaid-docker-internal-scale)))
     (unless mermaid-docker-stay-in-window
       (switch-to-buffer-other-window out-buff))))
 
