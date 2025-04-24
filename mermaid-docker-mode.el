@@ -107,10 +107,20 @@
   :group 'mermaid-docker
   :type 'boolean)
 
+(defcustom mermaid-docker-bin
+  "docker"
+  "Docker or Docker-compatible binary on PATH or absolute value."
+  :group 'mermaid-docker
+  :type 'string)
+
 (define-error 'mermaid-docker-error "Generic mermaid-docker-mode error")
 
 (define-error 'mermaid-docker-render-error
   "Rendering error"
+  'mermaid-docker-error)
+
+(define-error 'mermaid-docker-bin-not-found
+  "Docker binary not found"
   'mermaid-docker-error)
 
 
@@ -143,13 +153,20 @@ Argument CMD-LIST list of strings as a command+args to execute."
     (dolist (arg cmd-list) (push arg args))
     (unless (eq 0 (apply #'call-process-region (reverse args))) t)))
 
+(defun mermaid-docker--resolve-bin ()
+  (let ((bin mermaid-docker-bin))
+    (if (file-name-absolute-p bin)
+        (unless (file-exists-p bin)
+          (signal 'mermaid-docker-bin-not-found bin))
+      (executable-find bin))))
+
 (defun mermaid-docker--check-deps ()
   "Check if all deps are present on the system."
   (when mermaid-docker-verbose
     (mermaid-docker--log "Checking deps for mermaid-docker"))
   (let ((buff-name "*mermaid-docker deps*")
         (failed nil)
-        (deps '("docker")))
+        (deps `(,(mermaid-docker--resolve-bin))))
     (unless (eq window-system 'ns)
       (push "wmctrl" deps))
     ;; clean first
@@ -162,8 +179,10 @@ Argument CMD-LIST list of strings as a command+args to execute."
     ;; permissions, network, etc
     (dolist
         (item (list
-               (list nil "docker" "run" "--rm" "hello-world:latest")
-               (list nil "docker" "run" "--rm" "--network=none"
+               (list nil (mermaid-docker--resolve-bin)
+                     "run" "--rm" "hello-world:latest")
+               (list nil (mermaid-docker--resolve-bin)
+                     "run" "--rm" "--network=none"
                      "hello-world:latest")))
       (let ((tmp nil))
         (setq tmp (pop item))
@@ -185,7 +204,8 @@ Argument CMD-LIST list of strings as a command+args to execute."
 
     (when (mermaid-docker--call-cmd
            (get-buffer-create buff-name)
-           (list "docker" "run" "--rm" "--interactive"
+           (list (mermaid-docker--resolve-bin)
+                 "run" "--rm" "--interactive"
                  (format "%s:%s"
                          mermaid-docker-image-name
                          mermaid-docker-image-tag)
@@ -220,7 +240,8 @@ Argument FILENAME Diagram file."
     (with-temp-file out-file
       (when (mermaid-docker--call-cmd
              (current-buffer)
-             (list "docker" "run" "--rm" "--interactive"
+             (list (mermaid-docker--resolve-bin)
+                   "run" "--rm" "--interactive"
                    "--network=none"
                    (format "%s:%s"
                            mermaid-docker-image-name
@@ -256,7 +277,8 @@ Argument FILENAME Diagram file."
 
     (when (mermaid-docker--call-cmd
            tmp-buff
-           (list "docker" "run" "--rm" "--interactive"
+           (list (mermaid-docker--resolve-bin)
+                 "run" "--rm" "--interactive"
                  "--network=none"
                  (format "%s:%s"
                          mermaid-docker-image-name
@@ -324,7 +346,8 @@ Argument FILENAME =mermaid-compile-file= input arg."
     (with-temp-file out-file
       (when (mermaid-docker--call-cmd
              (current-buffer)
-             (list "docker" "run" "--rm" "--interactive"
+             (list (mermaid-docker--resolve-bin)
+                   "run" "--rm" "--interactive"
                    "--network=none"
                    (format "%s:%s"
                            mermaid-docker-image-name
