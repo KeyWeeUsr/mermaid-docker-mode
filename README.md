@@ -29,19 +29,20 @@ install manually, then:
 
 ## Customization
 
-Name                                |Type     |Default               |Description                                                 |
-------------------------------------|---------|----------------------|------------------------------------------------------------|
-`mermaid-docker-verbose`            |`boolean`|`t`                   |Emit messages when something's happening in the background. |
-`mermaid-docker-always-check-deps`  |`boolean`|`t`                   |Always look up binaries, libraries and other required tools.|
-`mermaid-docker-image-name`         |`string` |`"minlag/mermaid-cli"`|Official mermaid-cli image.                                 |
-`mermaid-docker-image-tag`          |`string` |`"11.4.1"`            |Tag for official mermaid-cli image.                         |
-`mermaid-docker-output-format`      |`string` |`"png"`               |Output format for rendered diagram.                         |
-`mermaid-docker-output`             |`string` |`""`                  |Default file output ('' / empty string).                    |
-`mermaid-docker-external-viewer-bin`|`string` |`"/usr/bin/xviewer"`  |Path to external image viewer.                              |
-`mermaid-docker-focus-steal-fix`    |`boolean`|`t`                   |Should attempt to fix focus stealing?                       |
-`mermaid-docker-focus-steal-ms`     |`number` |`200`                 |Milliseconds to wait before stealing focus back.            |
-`mermaid-docker-external`           |`boolean`|`nil`                 |Use external viewer to display rendered mermaid graph.      |
-`mermaid-docker-stay-in-window`     |`boolean`|`nil`                 |Stay in window with the diagram after rendering.            |
+Name                                |Type     |Default               |Description                                                  |
+------------------------------------|---------|----------------------|-------------------------------------------------------------|
+`mermaid-docker-verbose`            |`boolean`|`t`                   |Emit messages when something's happening in the background.  |
+`mermaid-docker-always-check-deps`  |`boolean`|`t`                   |Always look up binaries, libraries and other required tools. |
+`mermaid-docker-image-name`         |`string` |`"minlag/mermaid-cli"`|Official mermaid-cli image.                                  |
+`mermaid-docker-image-tag`          |`string` |`"11.4.3-beta.30"`    |Tag for official mermaid-cli image.                          |
+`mermaid-docker-output-format`      |`string` |`"png"`               |Output format for rendered diagram.                          |
+`mermaid-docker-output`             |`string` |`""`                  |Default file output ('' / empty string).                     |
+`mermaid-docker-external-viewer-bin`|`string` |`"/usr/bin/xviewer"`  |Path to external image viewer.                               |
+`mermaid-docker-focus-steal-fix`    |`boolean`|`t`                   |Should attempt to fix focus stealing?                        |
+`mermaid-docker-focus-steal-ms`     |`number` |`200`                 |Milliseconds to wait before stealing focus back.             |
+`mermaid-docker-external`           |`boolean`|`nil`                 |Use external viewer to display rendered mermaid graph.       |
+`mermaid-docker-stay-in-window`     |`boolean`|`nil`                 |Stay in window with the diagram after rendering.             |
+`mermaid-docker-bin`                |`string` |`"docker"`            |Docker or Docker-compatible binary on PATH or absolute value.|
 
 [melpa-badge]: http://melpa.org/packages/mermaid-docker-mode-badge.svg
 [melpa-package]: http://melpa.org/#/mermaid-docker-mode
